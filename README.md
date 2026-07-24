@@ -53,6 +53,45 @@ public/          favicon, manifest, robots.txt, sitemap.xml
   animated process timeline, pricing, FAQ accordion, blog, contact form + map placeholder
 - Accessibility: focus states, aria labels, `prefers-reduced-motion` respected
 
+## AI-authored daily blog
+
+The Insights section, `/blog` index and `/blog/:slug` article pages are driven by JSON files in
+`src/content/blog/`. `scripts/generate-blog.mjs` uses the Claude API (`@anthropic-ai/sdk`,
+`claude-opus-4-8`) to generate one SEO-optimized article per run, and
+`.github/workflows/daily-blog.yml` runs it **daily** and commits the result — which triggers a
+redeploy that publishes the new post.
+
+```bash
+cp .env.example .env      # add your ANTHROPIC_API_KEY
+npm run generate:blog     # writes a new article into src/content/blog/
+```
+
+For CI, add `ANTHROPIC_API_KEY` as a GitHub Actions secret (repo → Settings → Secrets → Actions).
+
+## Deployment
+
+This is a static SPA — deploy the `dist/` output to any static host. Config files for the two
+most common hosts are included, both with the **SPA rewrite** that keeps client-side routes
+(`/blog/:slug`, `/privacy`, …) working on direct load / refresh.
+
+### Vercel (`vercel.json` included)
+1. Import the GitHub repo at [vercel.com/new](https://vercel.com/new) — the Vite preset is auto-detected.
+2. Add the `ANTHROPIC_API_KEY` env var if you want the blog script to run there too (optional; CI already handles daily generation).
+3. Deploy. Every push (including the daily blog commit) redeploys automatically.
+
+### Netlify (`netlify.toml` included)
+1. "Add new site → Import from Git", pick the repo. Build command `npm run build`, publish dir `dist` (already set in `netlify.toml`).
+2. Deploy. Auto-deploys on every push.
+
+Manual / other hosts:
+
+```bash
+npm run build     # outputs to dist/
+npm run preview   # preview the production build locally
+```
+
+Serve `dist/` behind a catch-all rewrite to `index.html` so client-side routes resolve.
+
 ## Notes / next steps
 
 - Images use royalty-free Unsplash/pravatar URLs — swap for optimized local assets before launch.
