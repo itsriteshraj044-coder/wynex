@@ -66,7 +66,7 @@ export default function BlogPost() {
 
       <article className="pt-32">
         <div className="container-x">
-          <div className="mx-auto max-w-3xl">
+          <div>
             <Link to="/blog" className="inline-flex items-center gap-1.5 text-sm font-semibold text-ink-muted transition-colors hover:text-brand-indigo dark:text-slate-400">
               <ArrowLeft className="h-4 w-4" /> All articles
             </Link>
@@ -86,12 +86,12 @@ export default function BlogPost() {
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="mx-auto mt-10 max-w-4xl overflow-hidden rounded-4xl border border-white/60 shadow-glow dark:border-white/10"
+            className="mt-10 overflow-hidden rounded-4xl border border-white/60 shadow-glow dark:border-white/10"
           >
             <img src={post.image} alt={post.title} className="aspect-[16/9] w-full object-cover" />
           </motion.div>
 
-          <div className="mx-auto mt-12 max-w-3xl text-lg">
+          <div className="mt-12 text-lg">
             {post.content ? (
               <Markdown remarkPlugins={[remarkGfm]} components={mdComponents}>{post.content}</Markdown>
             ) : (
@@ -108,7 +108,7 @@ export default function BlogPost() {
           </div>
 
           {/* CTA */}
-          <div className="mx-auto mt-14 max-w-3xl">
+          <div className="mt-14">
             <div className="flex flex-col items-start justify-between gap-4 rounded-4xl border border-white/60 bg-brand-indigo/5 p-8 backdrop-blur-xl sm:flex-row sm:items-center dark:border-white/10 dark:bg-white/[0.04]">
               <div>
                 <h3 className="text-xl font-bold text-ink dark:text-white">Have a project in mind?</h3>
@@ -120,9 +120,9 @@ export default function BlogPost() {
 
           {/* Related */}
           {related.length > 0 && (
-            <div className="mx-auto mt-20 max-w-5xl">
+            <div className="mt-20">
               <h2 className="mb-8 text-2xl font-bold text-ink dark:text-white">More Insights</h2>
-              <div className="grid gap-6 md:grid-cols-3">
+              <div className="grid gap-6 md:grid-cols-3 xl:grid-cols-4">
                 {related.map((r) => (
                   <Link key={r.id} to={`/blog/${r.slug}`} className="group flex flex-col overflow-hidden rounded-3xl border border-white/60 bg-white/70 shadow-card backdrop-blur-xl transition-all hover:-translate-y-1 hover:shadow-glow dark:border-white/10 dark:bg-white/[0.04]">
                     <div className="aspect-[16/10] overflow-hidden">
