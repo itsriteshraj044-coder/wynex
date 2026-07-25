@@ -101,6 +101,14 @@
 
         <p>Explore our <a href="/#services">services</a>, our <a href="/#work">work</a>, our <a href="/#process">process</a>, and our <a href="/#about">team</a>, read the <a href="/blog">blog</a>, or <a href="/#contact">get in touch</a> to start your project today.</p>
       </main>
+      <!--
+        Covers the static content above with the same look as the app's real
+        Loader component, so visitors see a loading screen instead of a flash
+        of raw text before React mounts and replaces #root entirely.
+      -->
+      <div style="position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; background: #ffffff;">
+        <img src="/logo.png" alt="Wynex Technologies" style="height: 96px; width: auto;" />
+      </div>
     </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
