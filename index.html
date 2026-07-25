@@ -15,10 +15,10 @@
     <link rel="manifest" href="/manifest.webmanifest" />
 
     <!-- Primary Meta -->
-    <title>Wynex Technologies — Award-Winning Web, App & AI Development Agency</title>
+    <title>Wynex Technologies — Web, App & AI Development Agency</title>
     <meta
       name="description"
-      content="Wynex Technologies is a premium software development agency crafting high-performance websites, web & mobile apps, custom software, cloud and AI solutions for ambitious brands worldwide."
+      content="Wynex Technologies is a premium software agency crafting high-performance websites, apps, and AI solutions for ambitious brands worldwide."
     />
     <meta name="keywords" content="web development, mobile app development, custom software, React development, Next.js, AI integration, cloud solutions, UI UX design, SEO agency, Wynex Technologies" />
     <meta name="author" content="Wynex Technologies" />
@@ -69,7 +69,39 @@
     </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!--
+        Static crawlable content, shown only until React mounts and replaces it
+        (createRoot().render() overwrites #root's children on hydration, so
+        real visitors never see this — it exists purely so search engines and
+        SEO crawlers that don't execute JavaScript can read real content,
+        headings, and internal links instead of an empty shell.
+      -->
+      <main style="max-width: 860px; margin: 0 auto; padding: 4rem 1.5rem; font-family: system-ui, sans-serif; color: #0B1020;">
+        <h1 style="font-size: 2.25rem; font-weight: 800; line-height: 1.15;">Wynex Technologies — Web, App &amp; AI Development Agency</h1>
+        <p>Wynex Technologies is a premium software development agency crafting high-performance websites, mobile apps, custom software, cloud infrastructure, and AI solutions for ambitious brands worldwide. We partner with startups and enterprises to design, build, and scale award-worthy digital products engineered for measurable outcomes.</p>
+
+        <h2>Web &amp; App Development</h2>
+        <p>We build fast, scalable websites and mobile apps using modern frameworks like React, Next.js, TypeScript, and Node.js. Every product we ship is engineered for performance, accessibility, and long-term maintainability, from the first line of code to production deployment.</p>
+
+        <h2>UI/UX Design</h2>
+        <p>Our design team crafts pixel-perfect, award-worthy interfaces validated with real users. We obsess over typography, motion, and interaction detail so every product we ship looks as good as it performs, across desktop and mobile.</p>
+
+        <h2>Custom Software &amp; Cloud Solutions</h2>
+        <p>From internal tools to customer-facing platforms, we architect custom software and cloud infrastructure that scales with your business. Clean, tested code and zero-downtime deployments mean fewer surprises and faster iteration for your team.</p>
+
+        <h2>AI Integration</h2>
+        <p>We help brands integrate AI into their products responsibly and effectively, from intelligent search and recommendations to automation that saves real operational time.</p>
+
+        <h2>Our Process</h2>
+        <p>Every engagement starts with strategy, moves through design and engineering, and ends with a confident launch. We translate your vision into a product roadmap engineered for measurable business outcomes, then build it to last.</p>
+
+        <h2>Why Brands Choose Wynex</h2>
+        <p>Over 320 products shipped, a 98% client retention rate, and a team obsessed with craft and speed. We work as an extension of your team, not a vendor, from kickoff to launch and beyond.</p>
+
+        <p>Explore our <a href="/#services">services</a>, our <a href="/#work">work</a>, our <a href="/#process">process</a>, and our <a href="/#about">team</a>, read the <a href="/blog">blog</a>, or <a href="/#contact">get in touch</a> to start your project today.</p>
+      </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
