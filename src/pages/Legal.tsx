@@ -12,7 +12,7 @@ const CONTENT: Record<string, { title: string; updated: string; intro: string; s
       { heading: 'How we use your information', body: 'We use your information to respond to enquiries, deliver our services, improve our website, and — where you have opted in — send you occasional updates. We never sell your data.' },
       { heading: 'Cookies', body: 'We use essential cookies to run the site and optional analytics cookies to understand usage. You can control cookies through your browser settings.' },
       { heading: 'Data security', body: 'We apply industry-standard safeguards to protect your data. No method of transmission is 100% secure, but we continually review our practices.' },
-      { heading: 'Your rights', body: 'You may request access to, correction of, or deletion of your personal data at any time by emailing hello@wynex.tech.' },
+      { heading: 'Your rights', body: 'You may request access to, correction of, or deletion of your personal data at any time by emailing hello@wynex-seven.vercel.app.' },
     ],
   },
   terms: {
@@ -61,7 +61,7 @@ export default function Legal({ type }: { type: 'privacy' | 'terms' | 'cookies' 
           </div>
 
           <p className="mt-12 rounded-3xl border border-white/60 bg-white/70 p-6 text-sm text-ink-muted backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-400">
-            Questions about this policy? Email us at <a href="mailto:hello@wynex.tech" className="font-semibold text-brand-indigo">hello@wynex.tech</a>.
+            Questions about this policy? Email us at <a href="mailto:hello@wynex-seven.vercel.app" className="font-semibold text-brand-indigo">hello@wynex-seven.vercel.app</a>.
           </p>
         </div>
       </div>

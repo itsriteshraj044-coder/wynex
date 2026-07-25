@@ -45,7 +45,7 @@ jobs:
       - name: Commit & push the new article
         run: |
           git config user.name "wynex-bot"
-          git config user.email "bot@wynex.tech"
+          git config user.email "bot@wynex-seven.vercel.app"
           git add src/content/blog/
           if git diff --staged --quiet; then
             echo "No new article generated — nothing to publish."

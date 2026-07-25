@@ -3,20 +3,22 @@ import { motion } from 'framer-motion';
 import { Mail, MapPin, Phone, Send, CheckCircle2, Loader2 } from 'lucide-react';
 import SectionHeading from '../ui/SectionHeading';
 import { SITE } from '../../constants/site';
+import { SERVICES } from '../../constants/services';
 
 type Status = 'idle' | 'sending' | 'sent';
 
-const budgets = ['< $10k', '$10k – $25k', '$25k – $50k', '$50k+'];
-
 export default function Contact() {
   const [status, setStatus] = useState<Status>('idle');
-  const [form, setForm] = useState({ name: '', email: '', company: '', budget: budgets[1], message: '' });
+  const [form, setForm] = useState({ name: '', email: '', phone: '', city: '', state: '', service: SERVICES[0].title, message: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validate = () => {
     const e: Record<string, string> = {};
     if (!form.name.trim()) e.name = 'Please enter your name';
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = 'Enter a valid email';
+    if (!/^[+\d][\d\s-]{7,}$/.test(form.phone.trim())) e.phone = 'Enter a valid phone number';
+    if (!form.city.trim()) e.city = 'Please enter your city';
+    if (!form.state.trim()) e.state = 'Please enter your state';
     if (form.message.trim().length < 10) e.message = 'Tell us a little more (10+ chars)';
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -65,7 +67,7 @@ export default function Contact() {
                     <span className="relative inline-flex h-4 w-4 rounded-full bg-white" />
                   </span>
                 </div>
-                <span className="absolute bottom-3 left-3 text-xs font-semibold text-white/80">San Francisco HQ</span>
+                <span className="absolute bottom-3 left-3 text-xs font-semibold text-white/80">Patna HQ</span>
               </div>
             </div>
 
@@ -89,14 +91,24 @@ export default function Contact() {
                       <input id="email" type="email" {...field('email')} className="input" placeholder="jane@company.com" autoComplete="email" />
                     </Field>
                   </div>
-                  <Field label="Company (optional)" id="company">
-                    <input id="company" {...field('company')} className="input" placeholder="Company Inc." autoComplete="organization" />
-                  </Field>
-                  <Field label="Project budget" id="budget">
-                    <select id="budget" {...field('budget')} className="input">
-                      {budgets.map((b) => <option key={b}>{b}</option>)}
-                    </select>
-                  </Field>
+                  <div className="grid gap-5 sm:grid-cols-2">
+                    <Field label="Phone number" id="phone" error={errors.phone}>
+                      <input id="phone" type="tel" {...field('phone')} className="input" placeholder="+91 98765 43210" autoComplete="tel" />
+                    </Field>
+                    <Field label="Service" id="service">
+                      <select id="service" {...field('service')} className="input">
+                        {SERVICES.map((s) => <option key={s.slug}>{s.title}</option>)}
+                      </select>
+                    </Field>
+                  </div>
+                  <div className="grid gap-5 sm:grid-cols-2">
+                    <Field label="City" id="city" error={errors.city}>
+                      <input id="city" {...field('city')} className="input" placeholder="Mumbai" autoComplete="address-level2" />
+                    </Field>
+                    <Field label="State" id="state" error={errors.state}>
+                      <input id="state" {...field('state')} className="input" placeholder="Maharashtra" autoComplete="address-level1" />
+                    </Field>
+                  </div>
                   <Field label="Tell us about your project" id="message" error={errors.message}>
                     <textarea id="message" {...field('message')} rows={4} className="input resize-none" placeholder="What are you looking to build?" />
                   </Field>
