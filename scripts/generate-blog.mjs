@@ -15,8 +15,8 @@ import { GoogleGenAI, Type } from '@google/genai';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const BLOG_DIR = path.join(__dirname, '..', 'src', 'content', 'blog');
-// `gemini-flash-latest` always resolves to the current flash model, so the
-// daily job keeps working when Google rotates/deprecates specific versions.
+// `gemini-flash-latest` always resolves to the current flash model this key is
+// provisioned for (works across Gemini generations without hardcoding a version).
 const MODEL = process.env.GEMINI_MODEL || 'gemini-flash-latest';
 
 // Curated, hotlink-friendly Unsplash images by category.
@@ -81,6 +81,25 @@ const responseSchema = {
   propertyOrdering: ['title', 'slug', 'excerpt', 'metaDescription', 'keywords', 'category', 'tags', 'readTime', 'content'],
 };
 
+// Retry a single model on 429 (rate limit) with backoff; other errors bubble up.
+async function generateWithRetry(ai, model, contents, config) {
+  const waitsMs = [0, 20000, 40000]; // before attempts 1, 2, 3
+  let lastErr;
+  for (let i = 0; i < waitsMs.length; i++) {
+    if (waitsMs[i]) {
+      console.warn(`Rate limited on "${model}" — waiting ${waitsMs[i] / 1000}s then retrying…`);
+      await new Promise((r) => setTimeout(r, waitsMs[i]));
+    }
+    try {
+      return await ai.models.generateContent({ model, contents, config });
+    } catch (e) {
+      lastErr = e;
+      if (Number(e?.status ?? e?.code) !== 429) throw e; // only retry rate limits
+    }
+  }
+  throw lastErr;
+}
+
 async function main() {
   // .trim() self-heals the #1 CI failure: a trailing space/newline pasted into
   // the GitHub secret, which makes Google reject the key with a 400/403.
@@ -114,13 +133,14 @@ Return only the structured JSON object.`;
     responseMimeType: 'application/json',
     responseSchema,
   };
-  // Try the configured model, then fall back to widely-available ones.
-  const candidates = [MODEL, 'gemini-2.5-flash-lite', 'gemini-2.0-flash'].filter((m, i, a) => a.indexOf(m) === i);
+  // Try the configured model, then fall back to other "latest" aliases (which
+  // track whatever this key is entitled to, avoiding version-specific 404s).
+  const candidates = [MODEL, 'gemini-flash-lite-latest', 'gemini-pro-latest'].filter((m, i, a) => a.indexOf(m) === i);
 
   let response, usedModel, lastErr;
   for (const m of candidates) {
     try {
-      response = await ai.models.generateContent({ model: m, contents: prompt, config });
+      response = await generateWithRetry(ai, m, prompt, config);
       usedModel = m;
       break;
     } catch (e) {
