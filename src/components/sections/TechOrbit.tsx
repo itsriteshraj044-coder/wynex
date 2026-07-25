@@ -24,7 +24,7 @@ const OUTER: Tech[] = [
   { Icon: SiMongodb, color: '#47A248', label: 'MongoDB' },
 ];
 
-function Badge({ tech, size }: { tech: Tech; size: number }) {
+function Badge({ tech, size }: { tech: Tech; size: string }) {
   const reduced = useReducedMotion();
   const { Icon, color } = tech;
   return (
@@ -37,7 +37,7 @@ function Badge({ tech, size }: { tech: Tech; size: number }) {
       aria-label={tech.label}
       role="img"
     >
-      <Icon style={{ color, fontSize: size * 0.5 }} />
+      <Icon style={{ color, fontSize: `calc(${size} * 0.5)` }} />
     </motion.div>
   );
 }
@@ -48,7 +48,7 @@ function Badge({ tech, size }: { tech: Tech; size: number }) {
  * so badges always sit exactly on the line at any container size.
  */
 function Ring({ techs, radiusPct, duration, reverse, badge }: {
-  techs: Tech[]; radiusPct: number; duration: number; reverse?: boolean; badge: number;
+  techs: Tech[]; radiusPct: number; duration: number; reverse?: boolean; badge: string;
 }) {
   const reduced = useReducedMotion();
   return (
@@ -84,17 +84,19 @@ function Ring({ techs, radiusPct, duration, reverse, badge }: {
 /** Animated orbiting tech-stack icon cluster — the hero's centerpiece. */
 function TechOrbit() {
   return (
-    <div className="relative mx-auto aspect-square w-full max-w-[42rem]">
+    <div className="relative mx-auto aspect-square w-full max-w-[17rem] sm:max-w-[22rem] md:max-w-[28rem] lg:max-w-[36rem] xl:max-w-[42rem]">
       {/* orbit ring outlines — diameters 44% & 78% → radii 22% & 39% */}
       <div className="absolute left-1/2 top-1/2 h-[44%] w-[44%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-brand-indigo/15 dark:border-white/10" />
       <div className="absolute left-1/2 top-1/2 h-[78%] w-[78%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-brand-cyan/15 dark:border-white/10" />
 
       {/* soft ambient glow at centre (no logo/emblem) */}
-      <div className="absolute left-1/2 top-1/2 h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-gradient opacity-20 blur-3xl" />
+      <div className="absolute left-1/2 top-1/2 h-32 w-32 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-gradient opacity-20 blur-3xl sm:h-40 sm:w-40 md:h-48 md:w-48 lg:h-56 lg:w-56" />
 
-      {/* orbiting rings — radii match the outlines exactly */}
-      <Ring techs={INNER} radiusPct={22} duration={28} badge={72} />
-      <Ring techs={OUTER} radiusPct={39} duration={44} reverse badge={82} />
+      {/* orbiting rings — radii match the outlines exactly. Badge sizes scale
+          with viewport width (clamped) so they never overflow on mobile, while
+          the clamp ceiling preserves the original 72px/82px look on desktop. */}
+      <Ring techs={INNER} radiusPct={22} duration={28} badge="clamp(30px, 8vw, 72px)" />
+      <Ring techs={OUTER} radiusPct={39} duration={44} reverse badge="clamp(34px, 9vw, 82px)" />
     </div>
   );
 }
