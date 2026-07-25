@@ -1,19 +1,21 @@
 #!/usr/bin/env node
 /**
- * Generates one SEO-optimized tech blog article per run using the Claude API
- * and writes it as JSON into src/content/blog/. Intended to run daily via CI
- * (see .github/workflows/daily-blog.yml); the commit it produces triggers a
- * rebuild that publishes the new article.
+ * Generates one SEO-optimized tech blog article per run using the Google
+ * Gemini API and writes it as JSON into src/content/blog/. Intended to run
+ * daily via CI (see .github/workflows/daily-blog.yml); the commit it produces
+ * triggers a rebuild that publishes the new article.
  *
- * Requires: ANTHROPIC_API_KEY in the environment.
+ * Requires: GEMINI_API_KEY in the environment (from Google AI Studio).
+ * Optional: GEMINI_MODEL (defaults to gemini-2.5-flash).
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenAI, Type } from '@google/genai';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const BLOG_DIR = path.join(__dirname, '..', 'src', 'content', 'blog');
+const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 
 // Curated, hotlink-friendly Unsplash images by category.
 const IMAGES = {
@@ -56,34 +58,34 @@ function existingTitles() {
     .filter(Boolean);
 }
 
-const schema = {
-  type: 'object',
-  additionalProperties: false,
+const responseSchema = {
+  type: Type.OBJECT,
   properties: {
-    title: { type: 'string', description: 'Compelling, specific, SEO-friendly title in Title Case.' },
-    slug: { type: 'string', description: 'URL-safe slug, lowercase words separated by hyphens.' },
-    excerpt: { type: 'string', description: 'One-sentence hook, under 160 characters.' },
-    metaDescription: { type: 'string', description: 'SEO meta description, 140-160 characters, includes the primary keyword.' },
-    keywords: { type: 'array', items: { type: 'string' }, description: '5-8 SEO keywords/phrases.' },
-    category: { type: 'string', enum: CATEGORIES },
-    tags: { type: 'array', items: { type: 'string' }, description: '3 short tags.' },
-    readTime: { type: 'string', description: 'Estimated read time like "6 min".' },
+    title: { type: Type.STRING, description: 'Compelling, specific, SEO-friendly title in Title Case.' },
+    slug: { type: Type.STRING, description: 'URL-safe slug: lowercase words separated by hyphens.' },
+    excerpt: { type: Type.STRING, description: 'One-sentence hook, under 160 characters.' },
+    metaDescription: { type: Type.STRING, description: 'SEO meta description, 140-160 characters, includes the primary keyword.' },
+    keywords: { type: Type.ARRAY, items: { type: Type.STRING }, description: '5-8 SEO keywords/phrases.' },
+    category: { type: Type.STRING, enum: CATEGORIES },
+    tags: { type: Type.ARRAY, items: { type: Type.STRING }, description: '3 short tags.' },
+    readTime: { type: Type.STRING, description: 'Estimated read time like "6 min".' },
     content: {
-      type: 'string',
+      type: Type.STRING,
       description:
         'Full article body in GitHub-flavored Markdown, 700-1100 words. Use ## and ### headings, short paragraphs, at least one bullet list, bold key terms, and a concluding "## The takeaway" section. Do NOT include the H1 title. Natural, human, expert voice. Weave keywords in naturally — no keyword stuffing.',
     },
   },
   required: ['title', 'slug', 'excerpt', 'metaDescription', 'keywords', 'category', 'tags', 'readTime', 'content'],
+  propertyOrdering: ['title', 'slug', 'excerpt', 'metaDescription', 'keywords', 'category', 'tags', 'readTime', 'content'],
 };
 
 async function main() {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    console.error('Missing ANTHROPIC_API_KEY environment variable.');
+  if (!process.env.GEMINI_API_KEY) {
+    console.error('Missing GEMINI_API_KEY environment variable.');
     process.exit(1);
   }
 
-  const client = new Anthropic();
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   const avoid = existingTitles().slice(0, 40);
 
   const prompt = `You are a senior technical writer and SEO specialist for Wynex Technologies, a premium software development agency.
@@ -99,27 +101,27 @@ Requirements:
 - 700-1100 words of Markdown in "content" (no H1). Include at least one bullet list and a final "## The takeaway".
 - Pick the single best-fitting category from the allowed list.
 
-Return only the structured object.`;
+Return only the structured JSON object.`;
 
-  const response = await client.messages.create({
-    model: 'claude-opus-4-8',
-    max_tokens: 12000,
-    thinking: { type: 'adaptive' },
-    output_config: {
-      effort: 'high',
-      format: { type: 'json_schema', name: 'blog_post', schema },
+  const response = await ai.models.generateContent({
+    model: MODEL,
+    contents: prompt,
+    config: {
+      temperature: 0.9,
+      maxOutputTokens: 8192,
+      responseMimeType: 'application/json',
+      responseSchema,
     },
-    messages: [{ role: 'user', content: prompt }],
   });
 
-  if (response.stop_reason === 'refusal') {
-    console.error('Request was refused by safety classifiers.');
+  const raw = response.text;
+  if (!raw) {
+    console.error('No text returned. Finish reason:', response.candidates?.[0]?.finishReason);
+    console.error('Prompt feedback:', JSON.stringify(response.promptFeedback));
     process.exit(1);
   }
 
-  const textBlock = response.content.find((b) => b.type === 'text');
-  if (!textBlock) throw new Error('No text content returned by the model.');
-  const post = JSON.parse(textBlock.text);
+  const post = JSON.parse(raw.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim());
 
   // Normalise + enrich
   const today = new Date().toISOString().slice(0, 10);
@@ -138,9 +140,8 @@ Return only the structured object.`;
   }
   fs.writeFileSync(file, JSON.stringify(post, null, 2) + '\n');
 
-  console.log(`✓ Generated: ${post.title}`);
+  console.log(`✓ Generated with ${MODEL}: ${post.title}`);
   console.log(`  ${path.relative(path.join(__dirname, '..'), file)}`);
-  console.log(`  tokens: in=${response.usage.input_tokens} out=${response.usage.output_tokens}`);
 }
 
 main().catch((err) => {

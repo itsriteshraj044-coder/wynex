@@ -56,17 +56,18 @@ public/          favicon, manifest, robots.txt, sitemap.xml
 ## AI-authored daily blog
 
 The Insights section, `/blog` index and `/blog/:slug` article pages are driven by JSON files in
-`src/content/blog/`. `scripts/generate-blog.mjs` uses the Claude API (`@anthropic-ai/sdk`,
-`claude-opus-4-8`) to generate one SEO-optimized article per run, and
+`src/content/blog/`. `scripts/generate-blog.mjs` uses the **Google Gemini API** (`@google/genai`,
+`gemini-2.5-flash`) with structured JSON output to generate one SEO-optimized article per run, and
 `.github/workflows/daily-blog.yml` runs it **daily** and commits the result — which triggers a
 redeploy that publishes the new post.
 
 ```bash
-cp .env.example .env      # add your ANTHROPIC_API_KEY
+cp .env.example .env      # add your GEMINI_API_KEY (from https://aistudio.google.com/apikey)
 npm run generate:blog     # writes a new article into src/content/blog/
 ```
 
-For CI, add `ANTHROPIC_API_KEY` as a GitHub Actions secret (repo → Settings → Secrets → Actions).
+For CI, add `GEMINI_API_KEY` as a GitHub Actions secret (repo → Settings → Secrets → Actions).
+Optionally set `GEMINI_MODEL` (e.g. `gemini-2.5-pro`) to change the model.
 
 ## Deployment
 
