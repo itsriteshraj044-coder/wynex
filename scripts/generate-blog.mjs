@@ -82,12 +82,15 @@ const responseSchema = {
 };
 
 async function main() {
-  if (!process.env.GEMINI_API_KEY) {
+  // .trim() self-heals the #1 CI failure: a trailing space/newline pasted into
+  // the GitHub secret, which makes Google reject the key with a 400/403.
+  const apiKey = (process.env.GEMINI_API_KEY || '').trim();
+  if (!apiKey) {
     console.error('Missing GEMINI_API_KEY environment variable.');
     process.exit(1);
   }
 
-  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  const ai = new GoogleGenAI({ apiKey });
   const avoid = existingTitles().slice(0, 40);
 
   const prompt = `You are a senior technical writer and SEO specialist for Wynex Technologies, a premium software development agency.
@@ -105,16 +108,30 @@ Requirements:
 
 Return only the structured JSON object.`;
 
-  const response = await ai.models.generateContent({
-    model: MODEL,
-    contents: prompt,
-    config: {
-      temperature: 0.9,
-      maxOutputTokens: 8192,
-      responseMimeType: 'application/json',
-      responseSchema,
-    },
-  });
+  const config = {
+    temperature: 0.9,
+    maxOutputTokens: 8192,
+    responseMimeType: 'application/json',
+    responseSchema,
+  };
+  // Try the configured model, then fall back to widely-available ones.
+  const candidates = [MODEL, 'gemini-2.5-flash-lite', 'gemini-2.0-flash'].filter((m, i, a) => a.indexOf(m) === i);
+
+  let response, usedModel, lastErr;
+  for (const m of candidates) {
+    try {
+      response = await ai.models.generateContent({ model: m, contents: prompt, config });
+      usedModel = m;
+      break;
+    } catch (e) {
+      lastErr = e;
+      const status = Number(e?.status ?? e?.code);
+      // Auth / bad-request problems won't be fixed by trying another model.
+      if ([400, 401, 403].includes(status)) throw e;
+      console.warn(`Model "${m}" failed (${status || 'error'}); trying next…`);
+    }
+  }
+  if (!response) throw lastErr;
 
   const raw = response.text;
   if (!raw) {
@@ -142,11 +159,21 @@ Return only the structured JSON object.`;
   }
   fs.writeFileSync(file, JSON.stringify(post, null, 2) + '\n');
 
-  console.log(`✓ Generated with ${MODEL}: ${post.title}`);
+  console.log(`✓ Generated with ${usedModel}: ${post.title}`);
   console.log(`  ${path.relative(path.join(__dirname, '..'), file)}`);
 }
 
 main().catch((err) => {
-  console.error(err);
+  const status = Number(err?.status ?? err?.code);
+  console.error('\nBlog generation failed.');
+  if ([400, 401, 403].includes(status)) {
+    console.error('→ API key / permission problem. Re-check the GEMINI_API_KEY secret has NO extra');
+    console.error('  spaces or newline, and that the key is valid & enabled for the Gemini API.');
+  } else if (status === 404) {
+    console.error('→ Model not available to this key. Set the GEMINI_MODEL secret to a supported model.');
+  } else if (status === 429) {
+    console.error('→ Rate limit / quota exceeded. Wait and retry, or enable billing on the key.');
+  }
+  console.error(err?.message || err);
   process.exit(1);
 });
