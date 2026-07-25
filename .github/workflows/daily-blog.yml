@@ -1,12 +1,13 @@
 name: Daily AI Blog
 
-# Generates one SEO-optimized tech article per day with Claude and commits it.
-# The commit triggers your host (Vercel/Netlify/Pages) to rebuild & publish.
+# Generates exactly ONE SEO-optimized article per day with Gemini and pushes it.
+# Fully hands-off: the push below commits straight to the repo, which triggers
+# your host (Vercel/Netlify/Pages) to rebuild and publish. You never push manually.
 
 on:
   schedule:
-    - cron: '0 6 * * *' # every day at 06:00 UTC
-  workflow_dispatch: {} # allow manual runs from the Actions tab
+    - cron: '0 6 * * *' # once per day at 06:00 UTC
+  workflow_dispatch: {} # optional manual run from the Actions tab
 
 permissions:
   contents: write
@@ -34,16 +35,25 @@ jobs:
       - name: Generate article
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: npm run generate:blog
+        run: |
+          if [ -z "$GEMINI_API_KEY" ]; then
+            echo "::error::GEMINI_API_KEY secret is not set. Add it in Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+          npm run generate:blog
 
-      - name: Commit new article
+      - name: Commit & push the new article
         run: |
           git config user.name "wynex-bot"
           git config user.email "bot@wynex.tech"
           git add src/content/blog/
           if git diff --staged --quiet; then
-            echo "No new article to commit."
-          else
-            git commit -m "content: daily AI blog article ($(date -u +%Y-%m-%d))"
-            git push
+            echo "No new article generated — nothing to publish."
+            exit 0
           fi
+          NEW_FILE=$(git diff --staged --name-only | grep 'src/content/blog/' | tail -1)
+          git commit -m "content: daily AI blog article ($(date -u +%Y-%m-%d))"
+          # Explicit token auth so the push always succeeds.
+          git remote set-url origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          git push origin "HEAD:${{ github.ref_name }}"
+          echo "✅ Published: $NEW_FILE"
