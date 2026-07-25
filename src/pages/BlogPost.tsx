@@ -33,7 +33,7 @@ export default function BlogPost() {
   if (!post) return <Navigate to="/blog" replace />;
 
   const related = relatedPosts(post.slug);
-  const url = `https://wynex.tech/blog/${post.slug}`;
+  const url = `https://wynex-seven.vercel.app/blog/${post.slug}`;
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -47,7 +47,7 @@ export default function BlogPost() {
     publisher: {
       '@type': 'Organization',
       name: 'Wynex Technologies',
-      logo: { '@type': 'ImageObject', url: 'https://wynex.tech/favicon.png' },
+      logo: { '@type': 'ImageObject', url: 'https://wynex-seven.vercel.app/favicon.png' },
     },
     keywords: (post.keywords ?? post.tags ?? []).join(', '),
     mainEntityOfPage: { '@type': 'WebPage', '@id': url },

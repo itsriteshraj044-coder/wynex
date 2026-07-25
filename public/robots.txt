@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://wynex.tech/sitemap.xml
+Sitemap: https://wynex-seven.vercel.app/sitemap.xml
