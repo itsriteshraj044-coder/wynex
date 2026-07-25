@@ -29,7 +29,10 @@ export default function StoryScroll() {
           trigger: root.current,
           start: 'top top',
           end: `+=${frames.length * 100}%`,
-          scrub: 0.6,
+          // Lenis already smooths the raw scroll input; stacking GSAP's own scrub
+          // lag on top of that made the pin feel disconnected from the finger on
+          // touch. A light scrub keeps the fade cinematic without doubling up.
+          scrub: 0.25,
           pin: true,
           anticipatePin: 1,
         },

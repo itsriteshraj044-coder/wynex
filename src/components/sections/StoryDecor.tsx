@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactNode, CSSProperties } from 'react';
 import { TrendingUp, Rocket, Palette, Zap } from 'lucide-react';
 import { SiReact, SiTypescript, SiNodedotjs, SiDocker } from 'react-icons/si';
 import { cn } from '../../utils/cn';
@@ -166,8 +166,11 @@ export default function StoryDecor({ index }: { index: number }) {
         const widget = POOL[(index * 4 + i) % POOL.length];
         return (
           <div key={i} className={cn('absolute z-0 scale-[0.42] sm:scale-[0.58] md:scale-[0.75] lg:scale-100', p.origin, p.pos)}>
-            <div style={{ transform: p.tilt, transformStyle: 'preserve-3d' }}>
-              <div className="animate-float" style={{ animationDelay: `${p.delay}s` }}>
+            {/* 3D tilt + continuous float each force their own compositor layer — costly
+                during the pinned/scrubbed scroll on mobile GPUs, so keep cards flat & static
+                below sm and only add the flourish once there's headroom to render it smoothly. */}
+            <div className="sm:[transform:var(--tilt)]" style={{ '--tilt': p.tilt, transformStyle: 'preserve-3d' } as CSSProperties}>
+              <div className="sm:animate-float" style={{ animationDelay: `${p.delay}s` }}>
                 {widget}
               </div>
             </div>

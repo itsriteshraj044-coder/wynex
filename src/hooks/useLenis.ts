@@ -32,7 +32,25 @@ export function useLenis() {
     // expose for anchor scrolling
     (window as unknown as { __lenis?: Lenis }).__lenis = lenis;
 
+    // Pinned ScrollTrigger sections measure their start/end offsets on first
+    // mount, before webfonts swap in, hero images finish loading, or the page's
+    // own entrance transition settles — any of which shifts document height and
+    // leaves the pin mis-measured until something forces a recalculation (this is
+    // why a pinned section can render blank the first time you scroll into it,
+    // and only look right after a second scroll re-triggers layout). Watch the
+    // document for height changes and refresh automatically instead of guessing.
+    let refreshTimeout: number;
+    const scheduleRefresh = () => {
+      window.clearTimeout(refreshTimeout);
+      refreshTimeout = window.setTimeout(() => ScrollTrigger.refresh(), 150);
+    };
+    const ro = new ResizeObserver(scheduleRefresh);
+    ro.observe(document.body);
+    document.fonts?.ready.then(scheduleRefresh);
+
     return () => {
+      window.clearTimeout(refreshTimeout);
+      ro.disconnect();
       gsap.ticker.remove(raf);
       lenis.destroy();
     };
