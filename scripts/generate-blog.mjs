@@ -15,7 +15,9 @@ import { GoogleGenAI, Type } from '@google/genai';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const BLOG_DIR = path.join(__dirname, '..', 'src', 'content', 'blog');
-const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+// `gemini-flash-latest` always resolves to the current flash model, so the
+// daily job keeps working when Google rotates/deprecates specific versions.
+const MODEL = process.env.GEMINI_MODEL || 'gemini-flash-latest';
 
 // Curated, hotlink-friendly Unsplash images by category.
 const IMAGES = {
