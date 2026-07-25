@@ -5,6 +5,7 @@ import {
   SiNextdotjs, SiPython, SiGraphql, SiDocker, SiFigma, SiMongodb,
 } from 'react-icons/si';
 import type { IconType } from 'react-icons';
+import { isAndroid } from '../../utils/device';
 
 interface Tech { Icon: IconType; color: string; label: string; }
 
@@ -26,11 +27,13 @@ const OUTER: Tech[] = [
 
 function Badge({ tech, size }: { tech: Tech; size: string }) {
   const reduced = useReducedMotion();
+  // 10 concurrent JS-driven bounce loops add real main-thread cost on Android; skip there.
+  const skipBounce = reduced || isAndroid();
   const { Icon, color } = tech;
   return (
     <motion.div
       whileHover={{ scale: 1.15 }}
-      animate={reduced ? undefined : { y: [0, -5, 0] }}
+      animate={skipBounce ? undefined : { y: [0, -5, 0] }}
       transition={{ y: { duration: 3.4, repeat: Infinity, ease: 'easeInOut' } }}
       className="grid place-items-center rounded-2xl border border-white/60 bg-white/80 shadow-card backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.06]"
       style={{ width: size, height: size }}

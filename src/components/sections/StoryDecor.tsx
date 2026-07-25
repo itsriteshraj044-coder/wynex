@@ -138,10 +138,10 @@ function ToastCard({ icon, title, sub }: { icon: ReactNode; title: string; sub: 
 /* ------------------------------------------------------------------ */
 
 const POSITIONS = [
-  { pos: 'left-6 top-28 xl:left-16 xl:top-32', tilt: 'perspective(1100px) rotateY(15deg) rotateX(7deg)', delay: 0 },     // top-left
-  { pos: 'right-6 top-28 xl:right-16 xl:top-32', tilt: 'perspective(1100px) rotateY(-15deg) rotateX(7deg)', delay: 0.9 },  // top-right
-  { pos: 'left-6 bottom-28 xl:left-16 xl:bottom-32', tilt: 'perspective(1100px) rotateY(15deg) rotateX(-7deg)', delay: 1.4 }, // bottom-left
-  { pos: 'right-6 bottom-28 xl:right-16 xl:bottom-32', tilt: 'perspective(1100px) rotateY(-15deg) rotateX(-7deg)', delay: 0.4 }, // bottom-right
+  { pos: 'left-2 top-20 sm:left-6 sm:top-28 xl:left-16 xl:top-32', origin: 'origin-top-left', tilt: 'perspective(1100px) rotateY(15deg) rotateX(7deg)', delay: 0 },     // top-left
+  { pos: 'right-2 top-20 sm:right-6 sm:top-28 xl:right-16 xl:top-32', origin: 'origin-top-right', tilt: 'perspective(1100px) rotateY(-15deg) rotateX(7deg)', delay: 0.9 },  // top-right
+  { pos: 'left-2 bottom-20 sm:left-6 sm:bottom-28 xl:left-16 xl:bottom-32', origin: 'origin-bottom-left', tilt: 'perspective(1100px) rotateY(15deg) rotateX(-7deg)', delay: 1.4 }, // bottom-left
+  { pos: 'right-2 bottom-20 sm:right-6 sm:bottom-28 xl:right-16 xl:bottom-32', origin: 'origin-bottom-right', tilt: 'perspective(1100px) rotateY(-15deg) rotateX(-7deg)', delay: 0.4 }, // bottom-right
 ];
 
 // A pool of widgets; each frame shows a rotated selection so all four differ.
@@ -165,7 +165,7 @@ export default function StoryDecor({ index }: { index: number }) {
       {POSITIONS.map((p, i) => {
         const widget = POOL[(index * 4 + i) % POOL.length];
         return (
-          <div key={i} className={cn('absolute z-0 hidden lg:block', p.pos)}>
+          <div key={i} className={cn('absolute z-0 scale-[0.42] sm:scale-[0.58] md:scale-[0.75] lg:scale-100', p.origin, p.pos)}>
             <div style={{ transform: p.tilt, transformStyle: 'preserve-3d' }}>
               <div className="animate-float" style={{ animationDelay: `${p.delay}s` }}>
                 {widget}

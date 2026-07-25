@@ -4,6 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#ffffff" />
+    <script>
+      // Android's compositor is much slower at backdrop-filter/filter blur than iOS/desktop,
+      // which causes visible scroll jank. Tag the root so CSS can drop those effects for Android only.
+      if (/Android/i.test(navigator.userAgent)) document.documentElement.classList.add('android');
+    </script>
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/favicon.png" />
