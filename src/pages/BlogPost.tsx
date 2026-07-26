@@ -21,7 +21,12 @@ const mdComponents: Components = {
     </li>
   ),
   strong: ({ children }) => <strong className="font-semibold text-ink dark:text-white">{children}</strong>,
-  a: ({ children, href }) => <a href={href} className="font-medium text-brand-indigo underline underline-offset-2">{children}</a>,
+  a: ({ children, href }) =>
+    href?.startsWith('/') ? (
+      <Link to={href} className="font-medium text-brand-indigo underline underline-offset-2 hover:text-brand-violet">{children}</Link>
+    ) : (
+      <a href={href} target="_blank" rel="noopener noreferrer" className="font-medium text-brand-indigo underline underline-offset-2 hover:text-brand-violet">{children}</a>
+    ),
   code: ({ children }) => <code className="rounded bg-brand-indigo/10 px-1.5 py-0.5 font-mono text-sm text-brand-indigo">{children}</code>,
   blockquote: ({ children }) => <blockquote className="my-6 border-l-4 border-brand-indigo/40 pl-4 italic text-ink-muted dark:text-slate-400">{children}</blockquote>,
 };

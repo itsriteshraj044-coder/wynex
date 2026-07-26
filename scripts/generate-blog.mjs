@@ -45,19 +45,23 @@ function slugify(s) {
     .slice(0, 80);
 }
 
-function existingTitles() {
+function existingPosts() {
   if (!fs.existsSync(BLOG_DIR)) return [];
   return fs
     .readdirSync(BLOG_DIR)
     .filter((f) => f.endsWith('.json'))
     .map((f) => {
       try {
-        return JSON.parse(fs.readFileSync(path.join(BLOG_DIR, f), 'utf8')).title;
+        const p = JSON.parse(fs.readFileSync(path.join(BLOG_DIR, f), 'utf8'));
+        if (!p.title || !p.slug) return null;
+        return { title: p.title, slug: p.slug, category: p.category || '', date: p.date || '' };
       } catch {
         return null;
       }
     })
-    .filter(Boolean);
+    .filter(Boolean)
+    // Newest first so the model links to fresh, relevant articles.
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 }
 
 const responseSchema = {
@@ -74,7 +78,7 @@ const responseSchema = {
     content: {
       type: Type.STRING,
       description:
-        'Full article body in GitHub-flavored Markdown, 700-1100 words. Use ## and ### headings, short paragraphs, at least one bullet list, bold key terms, and a concluding "## The takeaway" section. Do NOT include the H1 title. Natural, human, expert voice. Weave keywords in naturally — no keyword stuffing.',
+        'Full article body in GitHub-flavored Markdown, 800-1200 words. Structure: a 2-3 sentence hook intro; several ## sections (with ### sub-sections where useful) that DELIBERATELY MIX flowing explanatory prose with scannable structure — every major section should pair a short descriptive paragraph with EITHER a bullet list OR a numbered list of concrete points (never wall-to-wall prose, never bullets-only). Bold key terms. Include a fenced code block only when it genuinely helps. End with a "## The takeaway" section. Do NOT include the H1 title. Natural, human, senior-engineer voice. Weave keywords in naturally — no keyword stuffing. IMPORTANT: Insert 2-3 contextual internal links to the RELATED existing articles listed in the prompt, using Markdown links whose href is exactly the given site-relative path (e.g. [natural anchor text](/blog/some-slug)). Only link when the connection is genuinely relevant, place links inline within sentences (never a bare "read more"), and never link to the article you are writing.',
     },
   },
   required: ['title', 'slug', 'excerpt', 'metaDescription', 'keywords', 'category', 'tags', 'readTime', 'content'],
@@ -110,19 +114,26 @@ async function main() {
   }
 
   const ai = new GoogleGenAI({ apiKey });
-  const avoid = existingTitles().slice(0, 40);
+  const posts = existingPosts();
+  const avoid = posts.slice(0, 40);
+  // The 24 most recent posts are offered as internal-link targets.
+  const linkable = posts.slice(0, 24);
 
   const prompt = `You are a senior technical writer and SEO specialist for Wynex Technologies, a premium software development agency.
 
 Write ONE fresh, genuinely useful, SEO-optimized blog article about a current software/technology topic. Choose a specific, practical angle that developers, founders or product leaders would search for — e.g. web performance, React/Next.js patterns, AI/LLM engineering, cloud/DevOps, mobile, UX/design engineering, security, or developer productivity.
 
 Make it distinct from these already-published titles (do NOT repeat their topics):
-${avoid.length ? avoid.map((t) => `- ${t}`).join('\n') : '- (none yet)'}
+${avoid.length ? avoid.map((p) => `- ${p.title}`).join('\n') : '- (none yet)'}
+
+INTERNAL LINKING — you MUST weave 2-3 contextual internal links into the body, pointing to the most topically relevant of these already-published articles. Use the exact path shown. Only link where it genuinely helps the reader; place each link naturally inside a sentence.
+${linkable.length ? linkable.map((p) => `- [${p.title}](/blog/${p.slug})${p.category ? `  (${p.category})` : ''}`).join('\n') : '- (none yet — skip internal links this time)'}
 
 Requirements:
 - Expert, human, non-generic voice. Concrete and actionable, not fluffy.
 - Strong SEO: a searchable title, a 140-160 char meta description containing the primary keyword, 5-8 relevant keywords, semantic H2/H3 structure, and natural keyword usage.
-- 700-1100 words of Markdown in "content" (no H1). Include at least one bullet list and a final "## The takeaway".
+- 800-1200 words of Markdown in "content" (no H1). Deliberately MIX descriptive prose with point-wise structure: pair short explanatory paragraphs with bullet or numbered lists throughout. End with a "## The takeaway".
+- Include the 2-3 required internal links inline, plus at least one list. Do NOT link to topics that aren't in the list above.
 - Pick the single best-fitting category from the allowed list.
 
 Return only the structured JSON object.`;
@@ -166,6 +177,24 @@ Return only the structured JSON object.`;
   const today = new Date().toISOString().slice(0, 10);
   post.slug = slugify(post.slug || post.title);
   post.id = post.slug;
+
+  // Guard interlinks: keep only Markdown links that point to a real /blog/<slug>
+  // (and never to this same article). Unknown internal links are unwrapped to
+  // plain text so we never publish a dead link.
+  const validSlugs = new Set(posts.map((p) => p.slug).concat(post.slug));
+  let kept = 0;
+  post.content = (post.content || '').replace(
+    /\[([^\]]+)\]\((\/blog\/[a-z0-9-]+)\)/gi,
+    (whole, text, href) => {
+      const target = href.replace('/blog/', '');
+      if (target !== post.slug && validSlugs.has(target)) {
+        kept++;
+        return whole;
+      }
+      return text; // drop dead/self links, keep the anchor words
+    },
+  );
+  console.log(`  internal links kept: ${kept}`);
   post.date = today;
   post.author = 'Wynex Editorial';
   const imgId = pick(IMAGES[post.category] || IMAGES.Web);
