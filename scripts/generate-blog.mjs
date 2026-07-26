@@ -45,6 +45,26 @@ function slugify(s) {
     .slice(0, 80);
 }
 
+// Cleans model output so we never publish raw escape sequences or messy
+// whitespace. Markdown is stored with REAL newlines in JSON (JSON.stringify
+// re-escapes them to \n on disk, which react-markdown renders correctly).
+function sanitizeContent(md) {
+  return String(md || '')
+    // Model sometimes emits the two literal characters "\" + "n" instead of a
+    // real newline — turn those (and \r\n, \t) into the real thing.
+    .replace(/\\r\\n|\\n/g, '\n')
+    .replace(/\\t/g, '  ')
+    .replace(/\r\n?/g, '\n')
+    // Strip a leaked H1 (we render the title ourselves) and any stray code fences.
+    .replace(/^\s*#\s+.*\n+/, '')
+    .replace(/^```(?:markdown|md)?\s*\n?/i, '')
+    .replace(/\n?```\s*$/i, '')
+    // Collapse 3+ blank lines and trim trailing spaces per line.
+    .replace(/[ \t]+$/gm, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 function existingPosts() {
   if (!fs.existsSync(BLOG_DIR)) return [];
   return fs
@@ -178,12 +198,15 @@ Return only the structured JSON object.`;
   post.slug = slugify(post.slug || post.title);
   post.id = post.slug;
 
+  // Clean up escape sequences / stray fences / whitespace before anything else.
+  post.content = sanitizeContent(post.content);
+
   // Guard interlinks: keep only Markdown links that point to a real /blog/<slug>
   // (and never to this same article). Unknown internal links are unwrapped to
   // plain text so we never publish a dead link.
   const validSlugs = new Set(posts.map((p) => p.slug).concat(post.slug));
   let kept = 0;
-  post.content = (post.content || '').replace(
+  post.content = post.content.replace(
     /\[([^\]]+)\]\((\/blog\/[a-z0-9-]+)\)/gi,
     (whole, text, href) => {
       const target = href.replace('/blog/', '');
@@ -194,7 +217,21 @@ Return only the structured JSON object.`;
       return text; // drop dead/self links, keep the anchor words
     },
   );
-  console.log(`  internal links kept: ${kept}`);
+
+  // Structural quality gate: a good article needs H2 sections, at least one
+  // list, and (when there are posts to link) real internal links. We warn
+  // loudly rather than fail the run so a daily post is never blocked, but the
+  // signal is visible in CI logs.
+  const hasHeadings = (post.content.match(/^##\s/gm) || []).length >= 2;
+  const hasList = /^\s*([-*]|\d+\.)\s/m.test(post.content);
+  const words = post.content.split(/\s+/).filter(Boolean).length;
+  const warns = [];
+  if (!hasHeadings) warns.push('fewer than 2 H2 sections');
+  if (!hasList) warns.push('no bullet/numbered list (point-wise structure missing)');
+  if (words < 700) warns.push(`only ${words} words`);
+  if (linkable.length && kept === 0) warns.push('no internal links (interlinking missing)');
+  if (warns.length) console.warn(`  ⚠ quality check: ${warns.join('; ')}`);
+  console.log(`  internal links kept: ${kept} · words: ${words} · lists: ${hasList ? 'yes' : 'no'}`);
   post.date = today;
   post.author = 'Wynex Editorial';
   const imgId = pick(IMAGES[post.category] || IMAGES.Web);
