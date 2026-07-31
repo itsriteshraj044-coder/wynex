@@ -77,6 +77,7 @@ export default function Footer() {
             <ul className="mt-6 space-y-2.5 text-sm text-ink-muted dark:text-slate-400">
               <li className="flex items-center gap-2.5"><Mail className="h-4 w-4 text-brand-indigo" /> {SITE.email}</li>
               <li className="flex items-center gap-2.5"><Phone className="h-4 w-4 text-brand-indigo" /> {SITE.phone}</li>
+              <li className="flex items-center gap-2.5"><Phone className="h-4 w-4 text-brand-indigo" /> {SITE.phoneAlt}</li>
               <li className="flex items-center gap-2.5"><MapPin className="h-4 w-4 text-brand-indigo" /> {SITE.address}</li>
             </ul>
           </div>
