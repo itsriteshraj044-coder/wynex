@@ -4,8 +4,9 @@ export const SITE = {
   name: 'Wynex Technologies',
   short: 'Wynex',
   tagline: 'We engineer award-winning digital products.',
-  email: 'hello@wynex-seven.vercel.app',
+  email: 'wynextechnologiespatna@gmail.com',
   phone: '+91 98765 43210',
+  phoneAlt: '+91 73773 34604',
   address: 'Boring Road, Patna, Bihar 800001, India',
   social: {
     twitter: 'https://twitter.com/wynextech',
