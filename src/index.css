@@ -164,11 +164,11 @@
   }
 
   .btn-primary {
-    @apply relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full bg-ink px-7 py-3.5 text-sm font-semibold text-white shadow-glow transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-indigo focus-visible:ring-offset-2;
+    @apply relative z-0 inline-flex items-center justify-center gap-2 overflow-hidden rounded-full bg-ink px-7 py-3.5 text-sm font-semibold text-white shadow-glow transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-indigo focus-visible:ring-offset-2;
   }
 
   .btn-ghost {
-    @apply relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full border border-ink/10 bg-white/60 px-7 py-3.5 text-sm font-semibold text-ink backdrop-blur transition-all duration-300 hover:-translate-y-0.5 hover:border-brand-indigo/30 hover:bg-white hover:shadow-soft active:translate-y-0 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-indigo focus-visible:ring-offset-2;
+    @apply relative z-0 inline-flex items-center justify-center gap-2 overflow-hidden rounded-full border border-ink/10 bg-white/60 px-7 py-3.5 text-sm font-semibold text-ink backdrop-blur transition-all duration-300 hover:-translate-y-0.5 hover:border-brand-indigo/30 hover:bg-white hover:shadow-soft active:translate-y-0 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-indigo focus-visible:ring-offset-2;
   }
 
   .eyebrow {
@@ -185,6 +185,7 @@
   content: '';
   position: absolute;
   inset: 0;
+  z-index: -1;
   background: linear-gradient(120deg, #4f46e5, #8b5cf6, #06b6d4);
   opacity: 0;
   transition: opacity 0.35s ease;
@@ -200,6 +201,7 @@
   bottom: 0;
   left: -60%;
   width: 45%;
+  z-index: -1;
   transform: skewX(-20deg);
   transition: left 0.7s ease;
   pointer-events: none;

@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm';
 import { ArrowLeft, ArrowUpRight, Clock, Calendar, User } from 'lucide-react';
 import Seo from '../components/ui/Seo';
 import { getPostBySlug, relatedPosts, formatDate } from '../utils/blog';
+import { useModal } from '../context/ModalContext';
 import type { Components } from 'react-markdown';
 
 const mdComponents: Components = {
@@ -34,6 +35,7 @@ const mdComponents: Components = {
 export default function BlogPost() {
   const { slug = '' } = useParams();
   const post = getPostBySlug(slug);
+  const { openModal } = useModal();
 
   if (!post) return <Navigate to="/blog" replace />;
 
@@ -119,7 +121,7 @@ export default function BlogPost() {
                 <h3 className="text-xl font-bold text-ink dark:text-white">Have a project in mind?</h3>
                 <p className="mt-1 text-sm text-ink-muted dark:text-slate-400">Let's build something award-winning together.</p>
               </div>
-              <Link to="/#contact" className="btn-primary shrink-0">Start a project <ArrowUpRight className="h-4 w-4" /></Link>
+              <button onClick={openModal} className="btn-primary shrink-0">Start a project <ArrowUpRight className="h-4 w-4" /></button>
             </div>
           </div>
 

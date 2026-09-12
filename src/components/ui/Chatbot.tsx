@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquareText, X, Send, Sparkles } from 'lucide-react';
+import { FaWhatsapp } from 'react-icons/fa';
 
 interface Msg { from: 'bot' | 'user'; text: string; }
 
@@ -8,8 +9,8 @@ const CANNED: Record<string, string> = {
   pricing: 'Projects start around $8k for websites and scale with complexity. Want a tailored quote? Drop your email in the contact form and we\'ll be in touch within a day.',
   services: 'We build websites, web & mobile apps, custom software (CRM/ERP/HRMS), plus cloud, AI and growth. Which area are you exploring?',
   time: 'Most sites ship in 4–6 weeks; complex apps in 3–5 months. We\'ll give you an exact timeline after a quick discovery call.',
-  hello: 'Hi there! 👋 I\'m Wyn, the Wynex assistant. Ask me about our services, pricing or process — or say "contact" to reach a human.',
-  contact: 'You can reach our team at wynextechnologiespatna@gmail.com, or scroll to the contact section and send us a message. We reply fast!',
+  hello: 'Hi there! 👋 I\'m Wyn, the Wynex assistant. Ask me about our services, pricing or process — or click the WhatsApp icon above to chat with a human!',
+  contact: 'You can reach our team at wynextechnologiespatna@gmail.com, send us a message via the contact form, or click the WhatsApp icon above to chat with us directly!',
 };
 
 function reply(input: string): string {
@@ -69,10 +70,19 @@ export default function Chatbot() {
               <div className="grid h-9 w-9 place-items-center rounded-full bg-white/20">
                 <Sparkles className="h-5 w-5" />
               </div>
-              <div>
+              <div className="flex-1">
                 <p className="text-sm font-bold leading-tight">Wyn · AI Assistant</p>
                 <p className="text-xs text-white/80">Typically replies instantly</p>
               </div>
+              <a
+                href="https://wa.me/919341267488"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Chat with us on WhatsApp"
+                className="grid h-8 w-8 place-items-center rounded-full bg-[#25D366] text-white transition-transform hover:scale-110 shadow-sm"
+              >
+                <FaWhatsapp className="h-5 w-5" />
+              </a>
             </div>
 
             <div className="flex-1 space-y-3 overflow-y-auto p-4">

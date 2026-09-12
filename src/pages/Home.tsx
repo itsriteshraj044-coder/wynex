@@ -30,10 +30,10 @@ export default function Home() {
       <About />
       <Services />
       <Stats />
+      <Work />
       <WhyChooseUs />
       <Process />
       <Technologies />
-      <Work />
       <Testimonials />
       <Awards />
       <FAQ />

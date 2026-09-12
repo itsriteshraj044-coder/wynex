@@ -3,6 +3,7 @@ import { ArrowUpRight, Play, Star, Sparkles } from 'lucide-react';
 import Magnetic from '../ui/Magnetic';
 import TechOrbit from './TechOrbit';
 import { scrollToId } from '../../utils/scroll';
+import { useModal } from '../../context/ModalContext';
 
 const words = ['Websites.', 'Apps.', 'Software.', 'AI Products.'];
 
@@ -16,6 +17,7 @@ const rise = {
 };
 
 export default function Hero() {
+  const { openModal } = useModal();
   return (
     <section id="home" className="relative flex min-h-[100svh] items-center overflow-hidden pt-28 pb-16">
       <div className="container-x relative grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
@@ -47,9 +49,9 @@ export default function Hero() {
 
           <motion.div variants={rise} className="mt-9 flex flex-wrap items-center gap-4">
             <Magnetic>
-              <a href="#contact" onClick={(e) => { e.preventDefault(); scrollToId('#contact'); }} className="btn-primary">
+              <button onClick={openModal} className="btn-primary">
                 Start your project <ArrowUpRight className="h-4 w-4" />
-              </a>
+              </button>
             </Magnetic>
             <a href="#work" onClick={(e) => { e.preventDefault(); scrollToId('#work'); }} className="btn-ghost">
               <span className="grid h-6 w-6 place-items-center rounded-full bg-brand-gradient text-white"><Play className="h-3 w-3 fill-current" /></span>

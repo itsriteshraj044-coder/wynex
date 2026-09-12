@@ -5,9 +5,9 @@ export const SITE = {
   short: 'Wynex',
   tagline: 'We engineer award-winning digital products.',
   email: 'wynextechnologiespatna@gmail.com',
-  phone: '+91 98765 43210',
+  phone: '+91 93412 67488',
   phoneAlt: '+91 73773 34604',
-  address: 'Boring Road, Patna, Bihar 800001, India',
+  address: 'Pragati Nagar, I.O.C Road Sipara, Patna, Bihar 800030, India',
   social: {
     twitter: 'https://twitter.com/wynextech',
     linkedin: 'https://www.linkedin.com/company/wynextech',

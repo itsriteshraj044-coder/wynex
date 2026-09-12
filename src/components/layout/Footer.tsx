@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Twitter, Linkedin, Github, Dribbble, ArrowUpRight, Mail, MapPin, Phone } from 'lucide-react';
 import { SITE } from '../../constants/site';
 import { scrollToId } from '../../utils/scroll';
+import { useModal } from '../../context/ModalContext';
 
 const columns = [
   {
@@ -43,6 +44,7 @@ const socials = [
 ];
 
 export default function Footer() {
+  const { openModal } = useModal();
   const onAnchor = (href: string) => (e: React.MouseEvent) => {
     if (href.startsWith('/#') && window.location.pathname === '/') {
       e.preventDefault();
@@ -60,9 +62,9 @@ export default function Footer() {
             <h2 className="text-3xl font-bold sm:text-4xl dark:text-white">Let's build something extraordinary.</h2>
             <p className="mt-2 max-w-lg text-ink-muted dark:text-slate-400">Tell us about your project and we'll get back within one business day.</p>
           </div>
-          <a href="/#contact" onClick={onAnchor('/#contact')} className="btn-primary shrink-0">
+          <button onClick={openModal} className="btn-primary shrink-0">
             Start a project <ArrowUpRight className="h-4 w-4" />
-          </a>
+          </button>
         </div>
 
         <div className="grid gap-12 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
@@ -74,6 +76,13 @@ export default function Footer() {
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-ink-muted dark:text-slate-400">
               A premium software agency engineering award-winning websites, apps and AI products for ambitious brands.
             </p>
+            <div className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-brand-indigo/20 bg-brand-indigo/5 px-3 py-1 text-xs font-medium text-brand-indigo dark:border-brand-indigo/30 dark:bg-brand-indigo/10">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-indigo opacity-75"></span>
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-brand-indigo"></span>
+              </span>
+              MSME Registered
+            </div>
             <ul className="mt-6 space-y-2.5 text-sm text-ink-muted dark:text-slate-400">
               <li className="flex items-center gap-2.5"><Mail className="h-4 w-4 text-brand-indigo" /> {SITE.email}</li>
               <li className="flex items-center gap-2.5"><Phone className="h-4 w-4 text-brand-indigo" /> {SITE.phone}</li>

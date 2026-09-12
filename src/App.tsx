@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ThemeProvider } from './context/ThemeContext';
+import { ModalProvider } from './context/ModalContext';
 import { useLenis } from './hooks/useLenis';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
@@ -62,7 +63,8 @@ export default function App() {
   useLenis();
   return (
     <ThemeProvider>
-      <Loader />
+      <ModalProvider>
+        <Loader />
       <AuroraBackground />
       <CustomCursor />
       <ScrollProgress />
@@ -72,6 +74,7 @@ export default function App() {
       <Footer />
       <BackToTop />
       <Chatbot />
+      </ModalProvider>
     </ThemeProvider>
   );
 }

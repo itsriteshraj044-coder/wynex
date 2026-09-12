@@ -7,6 +7,7 @@ import { scrollToId } from '../../utils/scroll';
 import ThemeToggle from '../ui/ThemeToggle';
 import Magnetic from '../ui/Magnetic';
 import { cn } from '../../utils/cn';
+import { useModal } from '../../context/ModalContext';
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -14,6 +15,7 @@ export default function Navbar() {
   const [mega, setMega] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { openModal } = useModal();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -54,9 +56,18 @@ export default function Navbar() {
           )}
         >
           {/* Logo */}
-          <Link to="/" className="flex items-center" aria-label="Wynex Technologies home">
-            <img src="/logo-mark.png" alt="Wynex Technologies logo" className="h-9 w-auto dark:brightness-0 dark:invert" width="77" height="36" />
-          </Link>
+          <div className="flex flex-col items-center gap-1">
+            <Link to="/" className="flex items-center" aria-label="Wynex Technologies home">
+              <img src="/logo-mark.png" alt="Wynex Technologies logo" className="h-9 w-auto dark:brightness-0 dark:invert" width="77" height="36" />
+            </Link>
+            <div className="hidden items-center gap-1.5 rounded-full border border-brand-indigo/20 bg-brand-indigo/5 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-brand-indigo sm:flex dark:border-brand-indigo/30 dark:bg-brand-indigo/10">
+              <span className="relative flex h-1 w-1">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-indigo opacity-75"></span>
+                <span className="relative inline-flex h-1 w-1 rounded-full bg-brand-indigo"></span>
+              </span>
+              MSME Registered
+            </div>
+          </div>
 
           {/* Desktop nav */}
           <ul className="hidden items-center gap-1 lg:flex">
@@ -121,10 +132,10 @@ export default function Navbar() {
           <div className="flex items-center gap-2">
             <ThemeToggle className="hidden sm:grid" />
             <Magnetic className="hidden lg:block">
-              <a href="/#contact" onClick={handleAnchor('/#contact')} className="btn-primary">
+              <button onClick={openModal} className="btn-primary">
                 Start a project
                 <ArrowUpRight className="h-4 w-4" />
-              </a>
+              </button>
             </Magnetic>
             <button
               onClick={() => setMobileOpen((o) => !o)}
@@ -166,9 +177,9 @@ export default function Navbar() {
               ))}
             </ul>
             <div className="mt-8 flex items-center gap-3">
-              <a href="/#contact" onClick={handleAnchor('/#contact')} className="btn-primary flex-1">
+              <button onClick={() => { openModal(); setMobileOpen(false); }} className="btn-primary flex-1">
                 Start a project <ArrowUpRight className="h-4 w-4" />
-              </a>
+              </button>
               <ThemeToggle />
             </div>
             <p className="mt-auto pt-8 text-sm text-ink-muted dark:text-slate-500">{SITE.email}</p>
