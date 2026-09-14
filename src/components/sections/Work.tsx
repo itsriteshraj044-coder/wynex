@@ -1,126 +1,54 @@
-import { useMemo, useRef, useState } from 'react';
-import { motion, AnimatePresence, useMotionValue, useSpring } from 'framer-motion';
-import { ArrowUpRight } from 'lucide-react';
-import SectionHeading from '../ui/SectionHeading';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowUpRight, Sparkles } from 'lucide-react';
 import { PROJECTS, PROJECT_FILTERS } from '../../constants/content';
-import type { Project } from '../../types';
 import { cn } from '../../utils/cn';
 
-/* Animated browser-mockup preview that floats beside the cursor */
-function BrowserPreview({ project }: { project: Project }) {
-  return (
-    <div className="overflow-hidden rounded-2xl border border-white/60 bg-white shadow-glow dark:border-white/10 dark:bg-[#0d1424]">
-      <div className="flex items-center gap-1.5 px-3 py-2.5">
-        {['#f87171', '#fbbf24', '#34d399'].map((c, i) => (
-          <motion.span key={i} className="h-2.5 w-2.5 rounded-full" style={{ background: c }}
-            animate={{ opacity: [0.5, 1, 0.5] }} transition={{ duration: 1.5, delay: i * 0.2, repeat: Infinity }} />
-        ))}
-        <div className="ml-2 h-4 flex-1 rounded-full bg-ink/5 dark:bg-white/10" />
-      </div>
-      <div className="relative h-0.5 w-full overflow-hidden bg-ink/5 dark:bg-white/10">
-        <motion.div className="absolute inset-y-0 left-0 rounded-full bg-brand-gradient"
-          animate={{ width: ['0%', '100%'] }} transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }} />
-      </div>
-      <div className="relative aspect-[16/10] overflow-hidden">
-        <img src={project.image} alt="" className="h-full w-full object-cover" />
-        <div className={cn('absolute inset-0 bg-linear-to-t opacity-55 mix-blend-multiply', project.accent)} />
-        <div className="absolute bottom-3 left-3 rounded-xl bg-white/90 px-3 py-1.5 backdrop-blur dark:bg-[#0d1424]/90">
-          <p className="text-sm font-bold text-ink dark:text-white">{project.metric.value}</p>
-          <p className="text-[10px] text-ink-muted dark:text-slate-400">{project.metric.label}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function Row({ p, i, onEnter }: { p: Project; i: number; onEnter: () => void }) {
-  return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.98 }}
-      transition={{ duration: 0.45, delay: Math.min(i * 0.05, 0.25) }}
-      onMouseEnter={onEnter}
-      className="group relative border-b border-ink/10 dark:border-white/10"
-    >
-      <div className="pointer-events-none absolute inset-0 bg-brand-indigo/[0.04] opacity-0 transition-opacity duration-300 group-hover:opacity-100 dark:bg-white/[0.03]" />
-      <a href="#work" className="relative flex flex-col gap-5 py-7 transition-transform duration-500 lg:flex-row lg:items-center lg:justify-between lg:py-9 lg:group-hover:translate-x-3">
-        <div className="flex items-start gap-4 lg:gap-8">
-          <span className="mt-2 font-mono text-sm font-semibold text-ink-muted transition-colors group-hover:text-brand-indigo dark:text-slate-500">
-            0{i + 1}
-          </span>
-          <div>
-            <h3 className="relative inline-block text-3xl font-bold text-ink dark:text-white lg:text-[2.6rem] lg:leading-[1.1]">
-              {p.title}
-              <span className="absolute -bottom-1 left-0 h-[3px] w-full origin-left scale-x-0 rounded-full bg-brand-gradient transition-transform duration-500 group-hover:scale-x-100" />
-            </h3>
-            <p className="mt-2 text-sm font-medium text-ink-muted dark:text-slate-400">{p.client} · {p.category}</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {p.tags.map((t) => (
-                <span key={t} className="rounded-full border border-ink/10 px-2.5 py-0.5 text-xs font-semibold text-ink-muted dark:border-white/10 dark:text-slate-400">{t}</span>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* inline image on mobile/tablet (no cursor hover there) */}
-        <div className="overflow-hidden rounded-2xl border border-white/60 shadow-card lg:hidden dark:border-white/10">
-          <img src={p.image} alt={`${p.title} — ${p.category}`} className="aspect-[16/10] w-full object-cover" loading="lazy" />
-        </div>
-
-        <div className="flex items-center justify-between gap-6 lg:justify-end">
-          <div className="text-left lg:text-right">
-            <p className="font-heading text-xl font-bold"><span className="text-gradient">{p.metric.value}</span></p>
-            <p className="text-[11px] font-medium text-ink-muted dark:text-slate-500">{p.metric.label}</p>
-          </div>
-          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full border border-ink/15 text-ink transition-all duration-300 group-hover:border-transparent group-hover:bg-brand-gradient group-hover:text-white dark:border-white/15 dark:text-white">
-            <ArrowUpRight className="h-5 w-5 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-          </span>
-        </div>
-      </a>
-    </motion.div>
-  );
-}
+const SectionHeading = ({ title, highlight }: { title: string, highlight: string }) => (
+  <div className="flex flex-col items-start max-w-3xl">
+    <span className="eyebrow mb-6 inline-flex items-center gap-3 text-sm font-semibold uppercase tracking-widest text-brand-indigo">
+      <Sparkles className="h-4 w-4" />
+      Featured Work
+    </span>
+    <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-ink dark:text-white leading-[1.1] tracking-tight">
+      {title} <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-cyan-500 dark:from-indigo-400 dark:to-cyan-400">{highlight}</span>
+    </h2>
+  </div>
+);
 
 export default function Work() {
   const [filter, setFilter] = useState<(typeof PROJECT_FILTERS)[number]>('All');
-  const [hovered, setHovered] = useState<number | null>(null);
-  const filtered = useMemo(
-    () => (filter === 'All' ? PROJECTS : PROJECTS.filter((p) => p.category === filter)),
-    [filter]
-  );
+  const [activeIdx, setActiveIdx] = useState(0);
 
-  const listRef = useRef<HTMLDivElement>(null);
-  const mx = useMotionValue(0);
-  const my = useMotionValue(0);
-  const x = useSpring(mx, { stiffness: 220, damping: 28, mass: 0.5 });
-  const y = useSpring(my, { stiffness: 220, damping: 28, mass: 0.5 });
+  const filtered = filter === 'All' 
+    ? PROJECTS 
+    : PROJECTS.filter((p) => p.category === filter);
 
-  const onMove = (e: React.MouseEvent) => {
-    const r = listRef.current?.getBoundingClientRect();
-    if (!r) return;
-    mx.set(e.clientX - r.left + 28);
-    my.set(e.clientY - r.top - 110);
-  };
+  // Reset active index when filter changes
+  React.useEffect(() => {
+    setActiveIdx(0);
+  }, [filter]);
 
-  const active = hovered !== null ? filtered[hovered] : null;
+  const activeProject = filtered[activeIdx] || filtered[0];
 
   return (
-    <section id="work" className="relative py-24 lg:py-32">
-      <div className="container-x">
-        <div className="flex flex-col items-start justify-between gap-8 lg:flex-row lg:items-end">
-          <SectionHeading align="left" eyebrow="Featured Work" title="Selected Projects That" highlight="Moved The Needle." />
+    <section id="work" className="relative py-24 lg:py-32 overflow-hidden bg-slate-50 dark:bg-[#03060d]">
+      <div className="container-x relative z-10">
+        
+        {/* Header & Filters */}
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 mb-12">
+          <SectionHeading title="Selected projects that" highlight="moved the needle." />
+          
           <div className="flex flex-wrap gap-2">
             {PROJECT_FILTERS.map((f) => (
               <button
                 key={f}
-                onClick={() => { setFilter(f); setHovered(null); }}
+                onClick={() => setFilter(f)}
                 className={cn(
-                  'rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 active:scale-95',
+                  'rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 active:scale-95 shadow-sm',
                   filter === f
-                    ? 'bg-ink text-white dark:bg-white dark:text-ink'
-                    : 'border border-ink/10 text-ink-muted hover:text-ink dark:border-white/10 dark:text-slate-400 dark:hover:text-white'
+                    ? 'bg-ink text-white shadow-md dark:bg-white dark:text-ink'
+                    : 'bg-white text-ink-muted border border-ink/10 hover:text-ink hover:border-ink/30 dark:bg-ink dark:border-white/10 dark:text-slate-400 dark:hover:text-white dark:hover:border-white/30'
                 )}
               >
                 {f}
@@ -129,37 +57,130 @@ export default function Work() {
           </div>
         </div>
 
-        <div
-          ref={listRef}
-          onMouseLeave={() => setHovered(null)}
-          onMouseMove={onMove}
-          className="relative mt-10 border-t border-ink/10 dark:border-white/10"
-        >
-          {/* cursor-following animated preview (desktop) */}
-          <motion.div style={{ x, y }} className="pointer-events-none absolute left-0 top-0 z-30 hidden w-72 lg:block">
-            <AnimatePresence>
-              {active && (
-                <motion.div
-                  key={active.id}
-                  initial={{ opacity: 0, scale: 0.82, rotate: -5 }}
-                  animate={{ opacity: 1, scale: 1, rotate: -3 }}
-                  exit={{ opacity: 0, scale: 0.82, rotate: -5 }}
-                  transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                >
-                  <BrowserPreview project={active} />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
+        {/* Compact Split Layout */}
+        <div className="flex flex-col lg:flex-row gap-12 lg:gap-20">
+           
+           {/* LEFT SIDE: Scrollable List of Project Names */}
+           <div className="w-full lg:w-[45%]">
+              
+              <div 
+                 className="flex flex-col h-[600px] overflow-y-auto overflow-x-hidden pr-4 lg:pr-6 py-4"
+                 style={{
+                   scrollbarWidth: 'thin',
+                   scrollbarColor: 'rgba(156, 163, 175, 0.3) transparent'
+                 }}
+              >
+                 {filtered.map((project, idx) => {
+                    const isActive = activeIdx === idx;
+                    return (
+                      <motion.div 
+                        key={project.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true, margin: "-10%" }}
+                        transition={{ duration: 0.5, delay: Math.min(idx * 0.1, 0.4) }}
+                        onMouseEnter={() => setActiveIdx(idx)}
+                        onClick={() => setActiveIdx(idx)}
+                        className={cn(
+                          "group py-8 cursor-pointer border-b border-ink/10 dark:border-white/10 transition-all duration-300",
+                          isActive ? "opacity-100 pl-4 lg:pl-6 border-brand-indigo dark:border-cyan-500" : "opacity-40 hover:opacity-70"
+                        )}
+                      >
+                        <div className="flex items-center gap-4 mb-2">
+                           <span className="font-mono text-sm font-semibold text-brand-indigo dark:text-cyan-400">0{idx + 1}</span>
+                           <span className="text-xs font-semibold uppercase tracking-wider text-ink dark:text-slate-400">{project.client} &bull; {project.category}</span>
+                        </div>
+                        <h3 className={cn(
+                          "text-4xl sm:text-4xl xl:text-5xl font-bold tracking-tight transition-colors duration-300",
+                          isActive ? "text-ink dark:text-white" : "text-ink dark:text-white group-hover:text-ink/80 dark:group-hover:text-white/80"
+                        )}>
+                          {project.title}
+                        </h3>
+                        
+                        {/* Mobile Only: Show photo and details inline when active */}
+                        {isActive && (
+                           <motion.div 
+                             initial={{ opacity: 0, height: 0 }}
+                             animate={{ opacity: 1, height: 'auto' }}
+                             className="mt-8 block lg:hidden"
+                           >
+                              <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden mb-6 shadow-xl">
+                                 <img src={project.image} alt={project.title} className="w-full h-full object-cover" />
+                              </div>
+                              <p className="text-base text-ink-muted dark:text-slate-300 mb-6">{project.description}</p>
+                              <div className="flex justify-between items-center">
+                                 <div>
+                                    <p className="text-2xl font-bold text-ink dark:text-white">{project.metric.value}</p>
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-brand-indigo">{project.metric.label}</p>
+                                 </div>
+                                 <button className="w-12 h-12 rounded-full bg-ink dark:bg-white text-white dark:text-ink flex items-center justify-center">
+                                    <ArrowUpRight className="w-5 h-5" />
+                                 </button>
+                              </div>
+                           </motion.div>
+                        )}
+                      </motion.div>
+                    );
+                 })}
+              </div>
+           </div>
 
-          <motion.div layout>
-            <AnimatePresence mode="popLayout">
-              {filtered.map((p, i) => (
-                <Row key={p.id} p={p} i={i} onEnter={() => setHovered(i)} />
-              ))}
-            </AnimatePresence>
-          </motion.div>
+           {/* RIGHT SIDE: Sticky Photo & Details (Desktop Only) */}
+           <div className="hidden lg:flex w-full lg:w-[55%] flex-col justify-center">
+              <div className="w-full">
+                 <AnimatePresence mode="wait">
+                    {activeProject && (
+                       <motion.div 
+                          key={activeProject.id}
+                          initial={{ opacity: 0, y: 20, scale: 0.98 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: -20, scale: 0.98 }}
+                          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                          className="flex flex-col"
+                       >
+                          {/* Photo */}
+                          <div className="relative w-full aspect-[16/10] xl:aspect-[16/9] rounded-[2rem] overflow-hidden mb-8 shadow-2xl border border-ink/5 dark:border-white/10 group/img cursor-pointer">
+                             <img 
+                               src={activeProject.image} 
+                               alt={activeProject.title} 
+                               className="w-full h-full object-cover transition-transform duration-700 group-hover/img:scale-[1.03]" 
+                             />
+                             <div className="absolute inset-0 bg-ink/5 dark:bg-black/10 group-hover/img:bg-transparent transition-colors duration-500 pointer-events-none" />
+                             
+                             {/* Floating Metric Card */}
+                             <div className="absolute bottom-6 right-6 bg-white/95 dark:bg-[#0a0a0a]/95 backdrop-blur-xl p-4 px-6 rounded-2xl shadow-xl border border-ink/10 dark:border-white/10 transform translate-y-4 opacity-0 group-hover/img:translate-y-0 group-hover/img:opacity-100 transition-all duration-500">
+                                <p className="text-3xl font-bold text-ink dark:text-white mb-1 tracking-tight">{activeProject.metric.value}</p>
+                                <p className="text-xs font-bold uppercase tracking-widest text-brand-indigo dark:text-cyan-400">{activeProject.metric.label}</p>
+                             </div>
+                          </div>
+
+                          {/* Details */}
+                          <div className="flex justify-between items-start gap-8 px-2">
+                             <div className="max-w-xl">
+                               <p className="text-lg text-ink-muted dark:text-slate-300 leading-relaxed mb-6">
+                                  {activeProject.description}
+                               </p>
+                               <div className="flex flex-wrap gap-2">
+                                  {activeProject.tags.map(tag => (
+                                     <span key={tag} className="px-3 py-1.5 rounded-xl bg-ink/5 dark:bg-white/5 text-xs font-semibold text-ink-muted dark:text-slate-400 transition-colors hover:bg-ink/10 dark:hover:bg-white/10 cursor-default">
+                                        {tag}
+                                     </span>
+                                  ))}
+                               </div>
+                             </div>
+
+                             <button className="shrink-0 flex items-center justify-center w-14 h-14 rounded-full bg-ink dark:bg-white text-white dark:text-ink hover:scale-110 hover:bg-brand-indigo dark:hover:bg-cyan-400 dark:hover:text-black shadow-lg transition-all duration-300 ease-out">
+                                <ArrowUpRight className="w-6 h-6" />
+                             </button>
+                          </div>
+                       </motion.div>
+                    )}
+                 </AnimatePresence>
+              </div>
+           </div>
+
         </div>
+
       </div>
     </section>
   );
