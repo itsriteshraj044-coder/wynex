@@ -16,6 +16,46 @@ const SectionHeading = ({ title, highlight }: { title: string, highlight: string
   </div>
 );
 
+const ProjectImage = ({ image, alt, className }: { image: string | string[], alt: string, className?: string }) => {
+  const [idx, setIdx] = React.useState(0);
+  
+  React.useEffect(() => {
+    if (Array.isArray(image) && image.length > 1) {
+      const interval = setInterval(() => {
+        setIdx(prev => (prev + 1) % image.length);
+      }, 2500);
+      return () => clearInterval(interval);
+    }
+  }, [image]);
+
+  const modifiedClassName = className?.replace('object-cover', '').replace('h-full', 'h-auto');
+
+  if (!Array.isArray(image) || image.length <= 1) {
+    const src = Array.isArray(image) ? image[0] : image;
+    return <img src={src} alt={alt} className={`w-full block ${modifiedClassName || ''}`} />;
+  }
+
+  return (
+    <div className="relative w-full overflow-hidden bg-ink/5 dark:bg-black/50">
+      <motion.div
+        className="flex w-full items-stretch"
+        animate={{ x: `-${idx * 100}%` }}
+        transition={{ type: "tween", ease: "easeInOut", duration: 0.8 }}
+      >
+        {image.map((src, i) => (
+          <div key={i} className="relative w-full flex-shrink-0 flex items-center justify-center">
+            <img 
+              src={src} 
+              alt={`${alt} ${i + 1}`} 
+              className={`w-full block ${modifiedClassName || ''}`}
+            />
+          </div>
+        ))}
+      </motion.div>
+    </div>
+  );
+};
+
 export default function Work() {
   const [filter, setFilter] = useState<(typeof PROJECT_FILTERS)[number]>('All');
   const [activeIdx, setActiveIdx] = useState(0);
@@ -104,8 +144,8 @@ export default function Work() {
                              animate={{ opacity: 1, height: 'auto' }}
                              className="mt-8 block lg:hidden"
                            >
-                              <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden mb-6 shadow-xl">
-                                 <img src={project.image} alt={project.title} className="w-full h-full object-cover" />
+                              <div className="relative w-full rounded-2xl overflow-hidden mb-6 shadow-xl">
+                                 <ProjectImage image={project.image} alt={project.title} className="w-full h-full object-cover" />
                               </div>
                               <p className="text-base text-ink-muted dark:text-slate-300 mb-6">{project.description}</p>
                               <div className="flex justify-between items-center">
@@ -113,9 +153,15 @@ export default function Work() {
                                     <p className="text-2xl font-bold text-ink dark:text-white">{project.metric.value}</p>
                                     <p className="text-[10px] font-bold uppercase tracking-wider text-brand-indigo">{project.metric.label}</p>
                                  </div>
-                                 <button className="w-12 h-12 rounded-full bg-ink dark:bg-white text-white dark:text-ink flex items-center justify-center">
-                                    <ArrowUpRight className="w-5 h-5" />
-                                 </button>
+                                 {project.link ? (
+                                   <a href={project.link} target="_blank" rel="noopener noreferrer" className="w-12 h-12 rounded-full bg-ink dark:bg-white text-white dark:text-ink flex items-center justify-center">
+                                      <ArrowUpRight className="w-5 h-5" />
+                                   </a>
+                                 ) : (
+                                   <button className="w-12 h-12 rounded-full bg-ink dark:bg-white text-white dark:text-ink flex items-center justify-center">
+                                      <ArrowUpRight className="w-5 h-5" />
+                                   </button>
+                                 )}
                               </div>
                            </motion.div>
                         )}
@@ -139,9 +185,9 @@ export default function Work() {
                           className="flex flex-col"
                        >
                           {/* Photo */}
-                          <div className="relative w-full aspect-[16/10] xl:aspect-[16/9] rounded-[2rem] overflow-hidden mb-8 shadow-2xl border border-ink/5 dark:border-white/10 group/img cursor-pointer">
-                             <img 
-                               src={activeProject.image} 
+                          <div className="relative w-full rounded-[2rem] overflow-hidden mb-8 shadow-2xl border border-ink/5 dark:border-white/10 group/img cursor-pointer">
+                             <ProjectImage 
+                               image={activeProject.image} 
                                alt={activeProject.title} 
                                className="w-full h-full object-cover transition-transform duration-700 group-hover/img:scale-[1.03]" 
                              />
@@ -169,9 +215,15 @@ export default function Work() {
                                </div>
                              </div>
 
-                             <button className="shrink-0 flex items-center justify-center w-14 h-14 rounded-full bg-ink dark:bg-white text-white dark:text-ink hover:scale-110 hover:bg-brand-indigo dark:hover:bg-cyan-400 dark:hover:text-black shadow-lg transition-all duration-300 ease-out">
-                                <ArrowUpRight className="w-6 h-6" />
-                             </button>
+                             {activeProject.link ? (
+                               <a href={activeProject.link} target="_blank" rel="noopener noreferrer" className="shrink-0 flex items-center justify-center w-14 h-14 rounded-full bg-ink dark:bg-white text-white dark:text-ink hover:scale-110 hover:bg-brand-indigo dark:hover:bg-cyan-400 dark:hover:text-black shadow-lg transition-all duration-300 ease-out">
+                                  <ArrowUpRight className="w-6 h-6" />
+                               </a>
+                             ) : (
+                               <button className="shrink-0 flex items-center justify-center w-14 h-14 rounded-full bg-ink dark:bg-white text-white dark:text-ink hover:scale-110 hover:bg-brand-indigo dark:hover:bg-cyan-400 dark:hover:text-black shadow-lg transition-all duration-300 ease-out">
+                                  <ArrowUpRight className="w-6 h-6" />
+                               </button>
+                             )}
                           </div>
                        </motion.div>
                     )}

@@ -24,7 +24,8 @@ export interface Project {
   category: string;
   description: string;
   tags: string[];
-  image: string;
+  image: string | string[];
+  link?: string;
   accent: string;
   metric: { value: string; label: string };
 }
