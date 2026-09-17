@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { Twitter, Linkedin, Github, Dribbble, ArrowUpRight, Mail, MapPin, Phone } from 'lucide-react';
+import { ArrowUpRight, Mail, MapPin, Phone } from 'lucide-react';
+import { FaLinkedinIn, FaFacebookF, FaInstagram, FaThreads } from 'react-icons/fa6';
 import { SITE } from '../../constants/site';
 import { scrollToId } from '../../utils/scroll';
 import { useModal } from '../../context/ModalContext';
@@ -37,10 +38,10 @@ const columns = [
 ];
 
 const socials = [
-  { icon: Twitter, href: SITE.social.twitter, label: 'Twitter' },
-  { icon: Linkedin, href: SITE.social.linkedin, label: 'LinkedIn' },
-  { icon: Github, href: SITE.social.github, label: 'GitHub' },
-  { icon: Dribbble, href: SITE.social.dribbble, label: 'Dribbble' },
+  { icon: FaLinkedinIn, href: SITE.social.linkedin, label: 'LinkedIn' },
+  { icon: FaFacebookF, href: SITE.social.facebook, label: 'Facebook' },
+  { icon: FaInstagram, href: SITE.social.instagram, label: 'Instagram' },
+  { icon: FaThreads, href: SITE.social.threads, label: 'Threads' },
 ];
 
 export default function Footer() {

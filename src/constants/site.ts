@@ -9,10 +9,10 @@ export const SITE = {
   phoneAlt: '+91 73773 34604',
   address: 'Pragati Nagar, I.O.C Road Sipara, Patna, Bihar 800030, India',
   social: {
-    twitter: 'https://twitter.com/wynextech',
-    linkedin: 'https://www.linkedin.com/company/wynextech',
-    github: 'https://github.com/wynextech',
-    dribbble: 'https://dribbble.com/wynextech',
+    linkedin: 'https://www.linkedin.com/company/wynex-technologies/',
+    facebook: 'https://www.facebook.com/share/1Da5aNKAhP/',
+    instagram: 'https://www.instagram.com/wynextechnologies/',
+    threads: 'https://www.threads.com/@wynextechnologies/',
   },
 };
 
