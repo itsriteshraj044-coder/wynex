@@ -31,3 +31,6 @@ Thumbs.db
 # Vite / TS
 *.tsbuildinfo
 node_modules/.tmp/
+
+# SMTP password for public/api/contact.php (generated at deploy time)
+mail-config.php

@@ -1,24 +1,39 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, CheckCircle2, Loader2, Mail, Phone } from 'lucide-react';
+import { X, CheckCircle2, Loader2, Mail, Phone, AlertCircle } from 'lucide-react';
 import { SITE } from '../../constants/site';
 import { SERVICES } from '../../constants/services';
+import { sendForm } from '../../utils/contact';
 
 export default function ContactModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent'>('idle');
   const [form, setForm] = useState({ name: '', email: '', phone: '', city: '', state: '', service: SERVICES[0].title, message: '' });
 
-  const submit = (e: React.FormEvent) => {
+  const [sendError, setSendError] = useState('');
+  const [honeypot, setHoneypot] = useState('');
+  const startedAt = useRef(Date.now());
+
+  useEffect(() => {
+    if (isOpen) startedAt.current = Date.now();
+  }, [isOpen]);
+
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('sending');
+    setSendError('');
+    try {
+      await sendForm({ type: 'contact', ...form }, startedAt.current, honeypot);
+    } catch (err) {
+      setSendError((err as Error).message);
+      setStatus('idle');
+      return;
+    }
+    setStatus('sent');
     setTimeout(() => {
-      setStatus('sent');
-      setTimeout(() => {
-        onClose();
-        setStatus('idle');
-        setForm({ name: '', email: '', phone: '', city: '', state: '', service: SERVICES[0].title, message: '' });
-      }, 3000);
-    }, 1500);
+      onClose();
+      setStatus('idle');
+      setForm({ name: '', email: '', phone: '', city: '', state: '', service: SERVICES[0].title, message: '' });
+    }, 3000);
   };
 
   return (
@@ -55,6 +70,17 @@ export default function ContactModal({ isOpen, onClose }: { isOpen: boolean; onC
                 </div>
               ) : (
                 <form onSubmit={submit} className="flex flex-col gap-5">
+                  {/* Honeypot: hidden from people, filled in by bots. */}
+                  <input
+                    type="text"
+                    name="website"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    aria-hidden="true"
+                    value={honeypot}
+                    onChange={(e) => setHoneypot(e.target.value)}
+                    className="absolute -left-[9999px] h-px w-px opacity-0"
+                  />
                   <div>
                     <h2 className="text-2xl font-bold text-ink dark:text-white">Let's build something.</h2>
                     <p className="mt-2 text-sm text-ink-muted dark:text-slate-400">Fill out the form below or reach us directly.</p>
@@ -133,6 +159,7 @@ export default function ContactModal({ isOpen, onClose }: { isOpen: boolean; onC
                       <label className="sr-only">Message</label>
                       <textarea
                         required
+                        minLength={10}
                         rows={3}
                         placeholder="How can we help?"
                         value={form.message}
@@ -141,6 +168,12 @@ export default function ContactModal({ isOpen, onClose }: { isOpen: boolean; onC
                       />
                     </div>
                   </div>
+                  {sendError && (
+                    <p role="alert" className="flex items-start gap-2 rounded-xl border border-rose-500/25 bg-rose-500/[0.07] p-3 text-sm text-rose-600 dark:text-rose-400">
+                      <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                      <span>{sendError} You can also email us at <a href={`mailto:${SITE.email}`} className="font-semibold underline">{SITE.email}</a>.</span>
+                    </p>
+                  )}
                   <button
                     type="submit"
                     disabled={status === 'sending'}

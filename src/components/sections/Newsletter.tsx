@@ -1,15 +1,29 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Send, CheckCircle2, Sparkles } from 'lucide-react';
+import { Send, CheckCircle2, Sparkles, Loader2 } from 'lucide-react';
+import { sendForm } from '../../utils/contact';
 
 export default function Newsletter() {
   const [email, setEmail] = useState('');
   const [done, setDone] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState('');
+  const [honeypot, setHoneypot] = useState('');
+  const startedAt = useRef(Date.now());
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return;
-    setDone(true);
+    setSending(true);
+    setSendError('');
+    try {
+      await sendForm({ type: 'newsletter', email }, startedAt.current, honeypot);
+      setDone(true);
+    } catch (err) {
+      setSendError((err as Error).message);
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -42,7 +56,19 @@ export default function Newsletter() {
                 <CheckCircle2 className="h-5 w-5" /> You're subscribed — welcome aboard!
               </p>
             ) : (
-              <form onSubmit={submit} className="mx-auto mt-8 flex max-w-md flex-col gap-3 sm:flex-row">
+              <>
+              <form onSubmit={submit} className="relative mx-auto mt-8 flex max-w-md flex-col gap-3 sm:flex-row">
+                {/* Honeypot: hidden from people, filled in by bots. */}
+                <input
+                  type="text"
+                  name="website"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  aria-hidden="true"
+                  value={honeypot}
+                  onChange={(e) => setHoneypot(e.target.value)}
+                  className="absolute -left-[9999px] h-px w-px opacity-0"
+                />
                 <input
                   type="email"
                   required
@@ -52,10 +78,14 @@ export default function Newsletter() {
                   aria-label="Email address"
                   className="flex-1 rounded-full border border-white/20 bg-white/10 px-5 py-3.5 text-sm text-white placeholder-white/50 outline-none ring-white/30 backdrop-blur focus:ring-2"
                 />
-                <button type="submit" className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3.5 text-sm font-semibold text-ink transition-transform hover:-translate-y-0.5">
-                  Subscribe <Send className="h-4 w-4" />
+                <button type="submit" disabled={sending} className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3.5 text-sm font-semibold text-ink transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-70">
+                  {sending ? <><Loader2 className="h-4 w-4 animate-spin" /> Subscribing…</> : <>Subscribe <Send className="h-4 w-4" /></>}
                 </button>
               </form>
+              {sendError && (
+                <p role="alert" className="mx-auto mt-3 max-w-md text-sm text-rose-300">{sendError}</p>
+              )}
+              </>
             )}
           </div>
         </motion.div>

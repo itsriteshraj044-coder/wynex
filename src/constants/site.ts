@@ -4,7 +4,7 @@ export const SITE = {
   name: 'Wynex Technologies',
   short: 'Wynex',
   tagline: 'We engineer award-winning digital products.',
-  email: 'wynextechnologiespatna@gmail.com',
+  email: 'info@wynextechnologies.com',
   phone: '+91 93412 67488',
   phoneAlt: '+91 73773 34604',
   address: 'Pragati Nagar, I.O.C Road Sipara, Patna, Bihar 800030, India',

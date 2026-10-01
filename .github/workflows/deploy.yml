@@ -6,6 +6,7 @@ name: Deploy to Hostinger
 #
 # One-time setup — repo Settings → Secrets and variables → Actions:
 #   Secrets:   FTP_SERVER, FTP_USERNAME, FTP_PASSWORD   (hPanel → Files → FTP Accounts)
+#              SMTP_PASSWORD  password of the info@wynextechnologies.com mailbox (contact forms)
 #   Optional (as a variable or a secret):
 #     FTP_SERVER_DIR  folder to upload into, with a trailing slash (default: public_html/)
 #     FTP_PROTOCOL    ftps (default) or ftp, if Hostinger rejects the TLS connection
@@ -45,6 +46,11 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Write mail config
+        env:
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+        run: node scripts/write-mail-config.mjs
 
       - name: Check FTP secrets
         env:

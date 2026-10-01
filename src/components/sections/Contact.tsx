@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Mail, MapPin, Phone, ArrowRight, CheckCircle2, Loader2, AlertCircle, ChevronDown } from 'lucide-react';
 import SectionHeading from '../ui/SectionHeading';
 import { SITE } from '../../constants/site';
 import { SERVICES } from '../../constants/services';
+import { sendForm } from '../../utils/contact';
 
 type Status = 'idle' | 'sending' | 'sent';
 
@@ -11,6 +12,9 @@ export default function Contact() {
   const [status, setStatus] = useState<Status>('idle');
   const [form, setForm] = useState({ name: '', email: '', phone: '', city: '', state: '', service: SERVICES[0].title, message: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [sendError, setSendError] = useState('');
+  const [honeypot, setHoneypot] = useState('');
+  const startedAt = useRef(Date.now());
   const reduceMotion = useReducedMotion();
 
   const errorList = Object.values(errors).filter(Boolean);
@@ -27,12 +31,18 @@ export default function Contact() {
     return Object.keys(e).length === 0;
   };
 
-  const submit = (ev: React.FormEvent) => {
+  const submit = async (ev: React.FormEvent) => {
     ev.preventDefault();
     if (!validate()) return;
     setStatus('sending');
-    // Simulated submission — wire to your backend / form service here.
-    setTimeout(() => setStatus('sent'), 1500);
+    setSendError('');
+    try {
+      await sendForm({ type: 'contact', ...form }, startedAt.current, honeypot);
+      setStatus('sent');
+    } catch (err) {
+      setSendError((err as Error).message);
+      setStatus('idle');
+    }
   };
 
   const field = (name: keyof typeof form) => ({
@@ -127,6 +137,17 @@ export default function Contact() {
                  * label, so the prose is decoration — not the accessible name.
                  */
                 <form onSubmit={submit} noValidate className="relative">
+                  {/* Honeypot: hidden from people, filled in by bots. */}
+                  <input
+                    type="text"
+                    name="website"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    aria-hidden="true"
+                    value={honeypot}
+                    onChange={(e) => setHoneypot(e.target.value)}
+                    className="absolute -left-[9999px] h-px w-px opacity-0"
+                  />
                   <p className="text-xl font-medium leading-[2.4] text-ink dark:text-slate-200 sm:text-2xl sm:leading-[2.5]">
                     Hi Wynex, I'm{' '}
                     <Blank id="name" label="Your name" placeholder="your name" autoComplete="name" error={errors.name} {...field('name')} />
@@ -177,6 +198,18 @@ export default function Contact() {
                         {errorList.map((msg) => <li key={msg} className="list-disc">{msg}</li>)}
                       </ul>
                     </motion.div>
+                  )}
+
+                  {sendError && (
+                    <div role="alert" className="mt-6 rounded-2xl border border-rose-500/25 bg-rose-500/[0.07] p-4 text-sm text-rose-600 dark:text-rose-400">
+                      <p className="flex items-center gap-2 font-semibold">
+                        <AlertCircle className="h-4 w-4 shrink-0" /> {sendError}
+                      </p>
+                      <p className="mt-1 pl-6">
+                        You can also email us at{' '}
+                        <a href={`mailto:${SITE.email}`} className="font-semibold underline">{SITE.email}</a>.
+                      </p>
+                    </div>
                   )}
 
                   <div className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-3">

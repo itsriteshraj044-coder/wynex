@@ -10,7 +10,7 @@ const CANNED: Record<string, string> = {
   services: 'We build websites, web & mobile apps, custom software (CRM/ERP/HRMS), plus cloud, AI and growth. Which area are you exploring?',
   time: 'Most sites ship in 4–6 weeks; complex apps in 3–5 months. We\'ll give you an exact timeline after a quick discovery call.',
   hello: 'Hi there! 👋 I\'m Wyn, the Wynex assistant. Ask me about our services, pricing or process — or click the WhatsApp icon above to chat with a human!',
-  contact: 'You can reach our team at wynextechnologiespatna@gmail.com, send us a message via the contact form, or click the WhatsApp icon above to chat with us directly!',
+  contact: 'You can reach our team at info@wynextechnologies.com, send us a message via the contact form, or click the WhatsApp icon above to chat with us directly!',
 };
 
 function reply(input: string): string {
@@ -20,7 +20,7 @@ function reply(input: string): string {
   if (/(time|long|deadline|when)/.test(q)) return CANNED.time;
   if (/(contact|email|call|human|talk)/.test(q)) return CANNED.contact;
   if (/(hi|hello|hey|start)/.test(q)) return CANNED.hello;
-  return 'Great question! For specifics like that, the fastest path is our team at wynextechnologiespatna@gmail.com. Meanwhile, I can help with services, pricing or timelines.';
+  return 'Great question! For specifics like that, the fastest path is our team at info@wynextechnologies.com. Meanwhile, I can help with services, pricing or timelines.';
 }
 
 export default function Chatbot() {
