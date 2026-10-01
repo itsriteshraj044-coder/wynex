@@ -202,10 +202,6 @@ ${
   rejected.length
     ? `\nThese titles you proposed were REJECTED as duplicates — do not propose them or anything close to them:\n${rejected.map((r) => `- "${r.title}" (too close to "${r.of}")`).join('\n')}\n`
     : ''
-}${
-  lastShortWords
-    ? `\nYour previous draft was REJECTED for being only ${lastShortWords} words. This article MUST be 900-1200 words: cover more sub-topics, add concrete examples and steps, and give every section real depth.\n`
-    : ''
 }
 Avoid formulaic titles that start with "Optimizing" or "Mastering"; write a specific, natural headline instead.
 
@@ -247,13 +243,10 @@ Return only the structured JSON object.`;
     throw lastErr;
   }
 
-  // Regenerate (telling the model what was wrong) until the topic is new and the
-  // article is long enough. Publishing nothing beats publishing a duplicate or a
-  // thin post, so give up after a few tries.
-  const MAX_ATTEMPTS = 4;
-  const MIN_WORDS = 700;
+  // Regenerate (telling the model what it repeated) until the topic is new.
+  // Publishing nothing beats publishing a duplicate, so give up after a few tries.
+  const MAX_ATTEMPTS = 3;
   const rejected = [];
-  let lastShortWords = 0;
   let post, usedModel;
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     const { response, model } = await generate(buildPrompt(rejected));
@@ -268,27 +261,16 @@ Return only the structured JSON object.`;
     candidate.slug = slugify(candidate.slug || candidate.title);
 
     const dup = findDuplicate(candidate, posts);
-    if (dup) {
-      console.warn(`Attempt ${attempt}: "${candidate.title}" duplicates "${dup.post.title}" (${dup.reason}).`);
-      rejected.push({ title: candidate.title, of: dup.post.title });
-      continue;
+    if (!dup) {
+      post = candidate;
+      usedModel = model;
+      break;
     }
-
-    // Clean up escape sequences / stray fences / whitespace before counting.
-    candidate.content = sanitizeContent(candidate.content);
-    const words = candidate.content.split(/\s+/).filter(Boolean).length;
-    if (words < MIN_WORDS) {
-      console.warn(`Attempt ${attempt}: "${candidate.title}" is only ${words} words (min ${MIN_WORDS}) — rewriting.`);
-      lastShortWords = words;
-      continue;
-    }
-
-    post = candidate;
-    usedModel = model;
-    break;
+    console.warn(`Attempt ${attempt}: "${candidate.title}" duplicates "${dup.post.title}" (${dup.reason}).`);
+    rejected.push({ title: candidate.title, of: dup.post.title });
   }
   if (!post) {
-    console.error(`\nNo article published: no attempt produced a new topic of ${MIN_WORDS}+ words (${MAX_ATTEMPTS} tries).`);
+    console.error(`\nNo article published: every attempt repeated an existing topic (${MAX_ATTEMPTS} tries).`);
     process.exit(1);
   }
 
@@ -296,6 +278,9 @@ Return only the structured JSON object.`;
   const today = new Date().toISOString().slice(0, 10);
   post.id = post.slug;
   post.category = category;
+
+  // Clean up escape sequences / stray fences / whitespace before anything else.
+  post.content = sanitizeContent(post.content);
 
   // Guard interlinks: keep only Markdown links that point to a real /blog/<slug>
   // (and never to this same article). Unknown internal links are unwrapped to
@@ -324,6 +309,7 @@ Return only the structured JSON object.`;
   const warns = [];
   if (!hasHeadings) warns.push('fewer than 2 H2 sections');
   if (!hasList) warns.push('no bullet/numbered list (point-wise structure missing)');
+  if (words < 700) warns.push(`only ${words} words`);
   if (linkable.length && kept === 0) warns.push('no internal links (interlinking missing)');
   if (warns.length) console.warn(`  ⚠ quality check: ${warns.join('; ')}`);
   console.log(`  internal links kept: ${kept} · words: ${words} · lists: ${hasList ? 'yes' : 'no'}`);
