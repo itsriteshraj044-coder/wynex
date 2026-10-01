@@ -4,6 +4,7 @@ import { X, CheckCircle2, Loader2, Mail, Phone, AlertCircle } from 'lucide-react
 import { SITE } from '../../constants/site';
 import { SERVICES } from '../../constants/services';
 import { sendForm } from '../../utils/contact';
+import { track } from '../../utils/analytics';
 
 export default function ContactModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent'>('idle');
@@ -28,6 +29,7 @@ export default function ContactModal({ isOpen, onClose }: { isOpen: boolean; onC
       setStatus('idle');
       return;
     }
+    track('generate_lead', { form: 'contact_popup', service: form.service });
     setStatus('sent');
     setTimeout(() => {
       onClose();

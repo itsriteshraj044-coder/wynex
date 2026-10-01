@@ -11,6 +11,7 @@ import CustomCursor from './components/ui/CustomCursor';
 import ScrollProgress from './components/ui/ScrollProgress';
 import BackToTop from './components/ui/BackToTop';
 import WhatsAppButton from './components/ui/WhatsAppButton';
+import CookieConsent from './components/ui/CookieConsent';
 import Loader from './components/ui/Loader';
 import Home from './pages/Home';
 import { scrollToId } from './utils/scroll';
@@ -117,6 +118,7 @@ export default function App() {
       <Footer />
       <BackToTop />
       <WhatsAppButton />
+      <CookieConsent />
       </ModalProvider>
     </ThemeProvider>
   );

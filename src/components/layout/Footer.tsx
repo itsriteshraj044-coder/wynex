@@ -4,6 +4,7 @@ import { FaLinkedinIn, FaFacebookF, FaInstagram, FaThreads } from 'react-icons/f
 import { SITE } from '../../constants/site';
 import { scrollToId } from '../../utils/scroll';
 import { useModal } from '../../context/ModalContext';
+import { openConsentSettings } from '../../utils/analytics';
 
 const columns = [
   {
@@ -114,7 +115,13 @@ export default function Footer() {
         </div>
 
         <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-ink/5 pt-8 sm:flex-row dark:border-white/5">
-          <p className="text-sm text-ink-muted dark:text-slate-500">© {new Date().getFullYear()} Wynex Technologies. All rights reserved.</p>
+          <p className="text-sm text-ink-muted dark:text-slate-500">
+            © {new Date().getFullYear()} Wynex Technologies. All rights reserved.
+            <span aria-hidden> · </span>
+            <button onClick={openConsentSettings} className="underline-offset-2 transition-colors hover:text-brand-indigo hover:underline">
+              Cookie settings
+            </button>
+          </p>
           <div className="flex items-center gap-3">
             {socials.map((s) => (
               <a key={s.label} href={s.href} target="_blank" rel="noreferrer" aria-label={s.label} className="grid h-9 w-9 place-items-center rounded-full border border-ink/10 text-ink-muted transition-colors hover:border-brand-indigo hover:text-brand-indigo dark:border-white/10 dark:text-slate-400">

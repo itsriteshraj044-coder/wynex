@@ -55,10 +55,11 @@ export const LEGAL: Record<'privacy' | 'terms' | 'cookies', LegalDoc> = {
               'Enquiry details you give us through the contact form, the "Start a project" form, email, phone or WhatsApp: your name, email address, phone number, city, state, the service you are interested in, and any project details you choose to share.',
               'Technical data sent automatically by your browser when you load a page: IP address, browser and device type, the page requested and the time. Our hosting provider records this in standard server logs for security and to keep the site running.',
               'A one-way (hashed) form of your IP address and the time of a form submission, kept for about 10 minutes to stop spam and repeated automated submissions.',
-              'Your light/dark theme choice, saved only in your own browser (local storage). It is never sent to us.',
+              'Usage data through Google Analytics, only if you accept analytics cookies: the pages you visit, how you arrived (for example from a search engine), your approximate city and country, device and browser type, and actions such as sending the contact form or tapping the WhatsApp button. Google Analytics 4 does not log or store your IP address. If you reject analytics cookies, Google receives only cookieless signals without identifiers (Google Consent Mode).',
+              'Your light/dark theme and cookie choices, saved only in your own browser (local storage).',
             ],
           },
-          'We do not use analytics or advertising trackers on this website, and we do not ask for sensitive information such as financial, health or identity documents through it. Please do not include such information in the form.',
+          'We do not use advertising trackers, and we do not ask for sensitive information such as financial, health or identity documents through this website. Please do not include such information in the form.',
         ],
       },
       {
@@ -70,6 +71,7 @@ export const LEGAL: Record<'privacy' | 'terms' | 'cookies', LegalDoc> = {
               'To read and reply to your enquiry and send you a proposal or quote you asked for.',
               'To deliver and support services if you become a client (this is then also covered by our written agreement with you).',
               'To keep the website secure, prevent spam and abuse, and fix technical problems.',
+              'With your consent, to understand how visitors use the website — which pages help and where people get stuck — so we can improve it.',
               'To meet legal, tax and accounting obligations.',
             ],
           },
@@ -82,6 +84,7 @@ export const LEGAL: Record<'privacy' | 'terms' | 'cookies', LegalDoc> = {
         blocks: [
           'When you submit a form or contact us, you consent to us using the details you provide for the purposes above. Giving us this information is voluntary, but without it we cannot respond to your enquiry.',
           `You can withdraw your consent at any time — as easily as you gave it — by emailing ${EMAIL} with the subject "Withdraw consent". We will stop processing your data for that purpose and delete it unless we must keep it by law. Withdrawal does not affect processing already carried out.`,
+          'Analytics cookies are used only if you click "Accept" on our cookie banner. You can change your choice at any time with the "Cookie settings" link at the bottom of every page.',
         ],
       },
       {
@@ -91,6 +94,7 @@ export const LEGAL: Record<'privacy' | 'terms' | 'cookies', LegalDoc> = {
           'This website uses the following third-party services. When your browser loads them, the provider receives your IP address and standard browser information, and may set its own cookies under its own privacy policy:',
           {
             list: [
+              'Google Analytics 4 — measures how the website is used, with analytics cookies only after you accept them. Google processes this data under its own policy, explained at https://policies.google.com/technologies/partner-sites. You can also opt out in your browser with Google’s add-on: https://tools.google.com/dlpage/gaoptout',
               'Google Fonts — loads the typeface used on this site. Google Privacy Policy: https://policies.google.com/privacy',
               'Google Maps (embedded map on the Contact section) — shows our office location and may set Google cookies when the map loads. How Google uses information from sites that use its services: https://policies.google.com/technologies/partner-sites',
               'Unsplash — serves some of the photographs on this site.',
@@ -104,7 +108,7 @@ export const LEGAL: Record<'privacy' | 'terms' | 'cookies', LegalDoc> = {
         id: 'cookies',
         heading: 'Cookies',
         blocks: [
-          'Our own website does not set advertising or analytics cookies. Third-party services listed above (in particular the embedded Google Map) may set cookies when they load. You can block or delete cookies in your browser settings; the site will continue to work, though the embedded map may not display. See our Cookie Policy at https://wynextechnologies.com/cookies for details.',
+          'We use Google Analytics cookies only if you accept them in our cookie banner, and we never use advertising cookies. Third-party services listed above (in particular the embedded Google Map) may set their own cookies when they load. You can change your analytics choice with "Cookie settings" at the bottom of any page, or block and delete cookies in your browser; the site will keep working, though the embedded map may not display. See our Cookie Policy at https://wynextechnologies.com/cookies for details.',
         ],
       },
       {
@@ -116,6 +120,7 @@ export const LEGAL: Record<'privacy' | 'terms' | 'cookies', LegalDoc> = {
               'Enquiries that do not lead to a project: up to 2 years from our last contact, then deleted.',
               'Client records: for the duration of the engagement and as long afterwards as required by Indian tax, accounting and contract law.',
               'Spam-prevention data (hashed IP): about 10 minutes.',
+              'Google Analytics data: 14 months, after which Google deletes it automatically.',
               'Server logs: kept by our hosting provider for a limited period for security purposes.',
             ],
           },
@@ -305,7 +310,7 @@ export const LEGAL: Record<'privacy' | 'terms' | 'cookies', LegalDoc> = {
   cookies: {
     title: 'Cookie Policy',
     updated: UPDATED,
-    intro: `This Cookie Policy explains how cookies and similar technologies are used on wynextechnologies.com. In short: our own website does not use advertising or analytics cookies.`,
+    intro: `This Cookie Policy explains how cookies and similar technologies are used on wynextechnologies.com. In short: we use Google Analytics cookies only if you accept them, and we never use advertising cookies.`,
     sections: [
       {
         id: 'what',
@@ -319,9 +324,23 @@ export const LEGAL: Record<'privacy' | 'terms' | 'cookies', LegalDoc> = {
           {
             list: [
               'Theme preference (local storage, "wynex-theme") — remembers whether you chose the light or dark theme. It stays on your device and is never sent to us.',
-              'No analytics, advertising or tracking cookies are set by our website.',
+              'Cookie choice (local storage, "wynex-consent") — remembers whether you accepted or rejected analytics cookies, so we don’t ask again on every page.',
             ],
           },
+        ],
+      },
+      {
+        id: 'analytics',
+        heading: 'Analytics cookies (only with your consent)',
+        blocks: [
+          'If you click "Accept" on our cookie banner, Google Analytics 4 sets these cookies to count visits and see how the site is used:',
+          {
+            list: [
+              '_ga — distinguishes one visitor from another. Expires after 2 years.',
+              '_ga_08CG98T6R7 — keeps track of the current visit (session). Expires after 2 years.',
+            ],
+          },
+          'If you click "Reject", or haven’t chosen yet, these cookies are not set. Google then receives only cookieless signals without identifiers, used for modelled, aggregate reporting. We never enable advertising cookies or ad personalisation.',
         ],
       },
       {
@@ -341,7 +360,7 @@ export const LEGAL: Record<'privacy' | 'terms' | 'cookies', LegalDoc> = {
       {
         id: 'manage',
         heading: 'Managing cookies',
-        blocks: ['You can block or delete cookies and local storage at any time in your browser settings. Blocking them will not stop our website from working, although the embedded map may not load.'],
+        blocks: ['Change your analytics choice at any time with the "Cookie settings" link at the bottom of every page. You can also block or delete cookies and local storage in your browser settings, or install Google’s opt-out add-on: https://tools.google.com/dlpage/gaoptout. Blocking cookies will not stop our website from working, although the embedded map may not load.'],
       },
       {
         id: 'more',

@@ -5,6 +5,7 @@ import SectionHeading from '../ui/SectionHeading';
 import { SITE } from '../../constants/site';
 import { SERVICES } from '../../constants/services';
 import { sendForm } from '../../utils/contact';
+import { track } from '../../utils/analytics';
 
 type Status = 'idle' | 'sending' | 'sent';
 
@@ -34,6 +35,7 @@ export default function Contact() {
     setSendError('');
     try {
       await sendForm({ type: 'contact', ...form }, startedAt.current, honeypot);
+      track('generate_lead', { form: 'contact_section', service: form.service });
       setStatus('sent');
     } catch (err) {
       setSendError((err as Error).message);
