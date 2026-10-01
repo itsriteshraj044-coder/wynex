@@ -261,6 +261,15 @@ const NEWS_FEEDS = [
   'https://www.theverge.com/rss/ai-artificial-intelligence/index.xml',
   'https://huggingface.co/blog/feed.xml',
 ];
+// How each feed's publisher is named in the article ("according to TechCrunch…").
+const SOURCE_NAMES = {
+  'openai.com': 'OpenAI',
+  'blog.google': 'Google',
+  'deepmind.google': 'Google DeepMind',
+  'techcrunch.com': 'TechCrunch',
+  'theverge.com': 'The Verge',
+  'huggingface.co': 'Hugging Face',
+};
 const MAX_STORY_AGE_DAYS = 7;
 const BOT_UA = 'Mozilla/5.0 (compatible; WynexBlogBot/1.0; +https://wynextechnologies.com)';
 
@@ -294,7 +303,8 @@ function feedTag(block, name) {
 }
 
 function parseFeed(xml, feedUrl) {
-  const source = new URL(feedUrl).hostname.replace(/^www\./, '');
+  const host = new URL(feedUrl).hostname.replace(/^www\./, '');
+  const source = SOURCE_NAMES[host] ?? host;
   const blocks = xml.match(/<item[\s>][\s\S]*?<\/item>|<entry[\s>][\s\S]*?<\/entry>/gi) || [];
   return blocks.map((b) => {
     const atomLink = (b.match(/<link[^>]*rel="alternate"[^>]*href="([^"]+)"/i) || b.match(/<link[^>]*href="([^"]+)"/i) || [])[1];
@@ -348,7 +358,7 @@ const pickSchema = {
 // even though the answer itself is tiny.
 const PICK_CONFIG = { temperature: 0.2, maxOutputTokens: 8192, responseMimeType: 'application/json', responseSchema: pickSchema };
 
-const pickPrompt = (news, posts) => `You run the blog of Wynex Technologies, a software agency. From this week's AI headlines below, choose up to 5 that the most people will be searching for right now, best first.
+const pickPrompt = (news, posts) => `You run the blog of Wynex Technologies, a software agency. From this week's AI headlines below, choose up to 8 that the most people will be searching for right now, best first.
 
 Prefer: new AI model launches and major upgrades (OpenAI/ChatGPT, Google Gemini, Anthropic Claude, Meta Llama, xAI Grok, Microsoft Copilot, Mistral, DeepSeek, Apple and similar), big new AI features or products, and pricing/availability changes that affect businesses or developers.
 Avoid: funding rounds, lawsuits, opinion pieces, research papers with no product, minor tutorials, and anything already covered by these published articles:
@@ -484,15 +494,34 @@ async function main() {
   const MAX_ATTEMPTS = 3;
   let post, usedModel, story;
   let attempts = 0;
-  for (const s of shortlist) {
+  for (const pick of shortlist) {
+    let s = pick;
     const already = findDuplicate({ title: s.title, slug: slugify(s.title) }, posts);
     if (already) {
       console.warn(`Skipping "${s.title}" — already covered by "${already.post.title}" (${already.reason}).`);
       continue;
     }
-    const sourceText = await readArticle(s.link);
+    let sourceText = await readArticle(s.link);
     if (!sourceText) {
-      console.warn(`Skipping "${s.title}" — couldn't read the article.`);
+      // Some publishers (OpenAI, for one) block bots. Fall back to another
+      // outlet's coverage of the same news, matched on the headline.
+      const others = news
+        .filter((n) => n.source !== s.source)
+        .map((n) => ({ n, score: titleSimilarity(n.title, s.title) }))
+        .filter((x) => x.score >= 0.2)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 3);
+      for (const { n } of others) {
+        sourceText = await readArticle(n.link);
+        if (sourceText) {
+          console.log(`  "${s.title}" (${s.source}) is unreadable; using ${n.source}'s coverage: ${n.title}`);
+          s = n;
+          break;
+        }
+      }
+    }
+    if (!sourceText) {
+      console.warn(`Skipping "${s.title}" — couldn't read the article or find other coverage.`);
       continue;
     }
     if (++attempts > MAX_ATTEMPTS) break;
