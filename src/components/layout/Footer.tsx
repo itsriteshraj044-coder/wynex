@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowUpRight, Mail, MapPin, Phone } from 'lucide-react';
 import { FaLinkedinIn, FaFacebookF, FaInstagram, FaThreads } from 'react-icons/fa6';
 import { SITE } from '../../constants/site';
@@ -46,11 +46,14 @@ const socials = [
 
 export default function Footer() {
   const { openModal } = useModal();
+  const navigate = useNavigate();
+  // Homepage sections: scroll there directly, or route home (no full reload) and
+  // let App scroll to the #section once the homepage has rendered.
   const onAnchor = (href: string) => (e: React.MouseEvent) => {
-    if (href.startsWith('/#') && window.location.pathname === '/') {
-      e.preventDefault();
-      scrollToId(href);
-    }
+    if (!href.startsWith('/#')) return;
+    e.preventDefault();
+    if (window.location.pathname === '/') scrollToId(href);
+    else navigate(href);
   };
 
   return (
