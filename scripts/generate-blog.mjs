@@ -162,6 +162,13 @@ async function generateWithRetry(ai, model, contents, config) {
     } catch (e) {
       lastErr = e;
       const status = Number(e?.status ?? e?.code);
+      if (status === 429 && i === 0) {
+        // Say which quota ran out (per-minute vs per-day, which model) so a
+        // failed run in CI is diagnosable from the log alone.
+        const ids = [...new Set(String(e?.message).match(/"quotaId":\s*"[^"]+"/g) || [])].map((q) => q.split('"')[3]);
+        const limits = [...new Set(String(e?.message).match(/limit: \d+, model: [\w.-]+/g) || [])];
+        console.warn(`  quota hit on "${model}": ${[...ids, ...limits].join(' · ') || String(e?.message).slice(0, 200)}`);
+      }
       if (!RETRYABLE.has(status)) throw e;
       // A quota of 0 means this key can't use the model at all (e.g. Pro on the
       // free tier); waiting won't help, so move on to the next model.
