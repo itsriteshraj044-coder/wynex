@@ -12,14 +12,6 @@ RewriteCond %{HTTPS} off
 RewriteCond %{HTTP_HOST} ^wynextechnologies\.com$ [NC]
 RewriteRule ^ https://wynextechnologies.com%{REQUEST_URI} [L,R=301]
 
-# --- Removed duplicate blog posts -> the original article ----------------------
-RewriteRule ^blog/optimizing-vector-search-performance-postgresql-pgvector-hnsw-indexes/?$ /blog/optimizing-vector-search-performance-postgres-pgvector-hnsw [L,R=301]
-RewriteRule ^blog/optimizing-api-gateway-performance-with-distributed-rate-limiting/?$ /blog/optimizing-api-gateway-performance-distributed-rate-limiting [L,R=301]
-RewriteRule ^blog/mastering-distributed-rate-limiting-for-high-scale-apis/?$ /blog/optimizing-api-gateway-performance-distributed-rate-limiting [L,R=301]
-RewriteRule ^blog/optimizing-database-query-performance-with-advanced-indexing-strategies/?$ /blog/optimizing-database-query-performance-advanced-indexing [L,R=301]
-RewriteRule ^blog/optimizing-database-connection-pooling-and-resilient-failover-in-distributed-mic/?$ /blog/mastering-connection-pooling-resilient-failover-distributed-microservices [L,R=301]
-RewriteRule ^blog/optimizing-postgresql-connection-pooling-resilient-failover-distributed-microser/?$ /blog/mastering-connection-pooling-resilient-failover-distributed-microservices [L,R=301]
-
 # --- Pre-rendered pages (written by scripts/prerender.ts) -------------------------
 # /about -> /_pages/about.html, /blog/<slug> -> /_pages/blog/<slug>.html, / -> /_pages/index.html.
 # Each has the page's own title, meta tags and content for crawlers and link
@@ -28,6 +20,14 @@ RewriteRule ^blog/optimizing-postgresql-connection-pooling-resilient-failover-di
 RewriteRule ^$ /_pages/index.html [L]
 RewriteCond %{DOCUMENT_ROOT}/_pages%{REQUEST_URI}.html -f
 RewriteRule ^(.+?)/?$ /_pages/$1.html [L]
+
+# --- Removed blog posts -> 410 Gone ------------------------------------------------
+# Every published post has a pre-rendered file (handled above), so any other
+# /blog/<slug> was deleted. 410 tells Google to drop it from the index; the
+# ErrorDocument still serves the app, which sends the visitor to /blog.
+ErrorDocument 410 /index.html
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^blog/[^/]+/?$ - [G,L]
 
 # --- SPA fallback ---------------------------------------------------------------
 # Client-side routes (/blog, /blog/:slug, /privacy, …) load index.html. Requests

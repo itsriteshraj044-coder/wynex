@@ -1,12 +1,15 @@
 #!/usr/bin/env node
 /**
- * Generates one SEO-optimized tech blog article per run using the Google
- * Gemini API and writes it as JSON into src/content/blog/. Intended to run
- * three times a week via CI (see .github/workflows/daily-blog.yml); the commit it produces
- * triggers a rebuild that publishes the new article.
+ * Writes one SEO-optimized article per run about a trending AI news story and
+ * saves it as JSON in src/content/blog/. Each run: (1) Gemini with Google Search
+ * grounding finds this week's biggest AI stories, (2) the newest story we haven't
+ * covered is written up from those facts only, (3) a human-editor pass rewrites
+ * AI-sounding prose, (4) verified source links are appended. Runs three times a
+ * week via CI (see .github/workflows/daily-blog.yml); the commit triggers a deploy.
  *
  * Requires: GEMINI_API_KEY in the environment (from Google AI Studio).
- * Optional: GEMINI_MODEL (defaults to gemini-2.5-flash).
+ * Optional: GEMINI_MODEL (defaults to gemini-flash-latest).
+ *           DRY_RUN=1 prints the article instead of saving it.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -79,15 +82,6 @@ function findDuplicate(candidate, posts) {
     if (score >= DUPLICATE_THRESHOLD) return { post: p, reason: `${Math.round(score * 100)}% title overlap` };
   }
   return null;
-}
-
-// Steer toward the category used least in recent posts so the blog doesn't
-// collapse into one or two topics.
-function pickCategory(posts, window = 14) {
-  const counts = Object.fromEntries(CATEGORIES.map((c) => [c, 0]));
-  for (const p of posts.slice(0, window)) if (p.category in counts) counts[p.category]++;
-  const least = Math.min(...Object.values(counts));
-  return pick(CATEGORIES.filter((c) => counts[c] === least));
 }
 
 // Cleans model output so we never publish raw escape sequences or messy
@@ -243,6 +237,114 @@ async function humanize(draft, run) {
   return edited;
 }
 
+/* ------------------------------------------------------------------ */
+/*  Trending AI news: research with Google Search, then write          */
+/* ------------------------------------------------------------------ */
+
+// Google Search grounding can't be combined with a JSON response schema, so the
+// research call returns text and we pull the JSON array out of it.
+const RESEARCH_CONFIG = { temperature: 0.3, maxOutputTokens: 8192, tools: [{ googleSearch: {} }] };
+const MAX_STORY_AGE_DAYS = 10;
+
+const researchPrompt = (today) => `Today is ${today}. Use Google Search to find the 6 biggest AI news stories from the last 7 days that people are actively searching for.
+
+Prioritise: new model releases and major updates (OpenAI / ChatGPT, Google Gemini, Anthropic Claude, Meta Llama, xAI Grok, Microsoft Copilot, Mistral, DeepSeek, Apple Intelligence and similar), big new AI features or products, pricing or availability changes, and AI news that matters to businesses and developers in India. Skip rumours, opinion pieces and funding-only news.
+
+Order them from most to least important. For each story give only facts you found in your search results.
+
+Reply with ONLY a JSON array, no other text:
+[
+  {
+    "headline": "short factual headline naming the company and product",
+    "date": "YYYY-MM-DD (the date it was announced)",
+    "facts": ["5-8 specific facts: what it is, key capabilities, benchmarks or numbers, who can use it, pricing/availability, how it compares"],
+    "sources": ["2-4 URLs of official announcements or reputable news coverage"]
+  }
+]`;
+
+function parseStories(text, today) {
+  const start = text.indexOf('[');
+  const end = text.lastIndexOf(']');
+  if (start < 0 || end <= start) return [];
+  let items;
+  try {
+    items = JSON.parse(text.slice(start, end + 1));
+  } catch {
+    return [];
+  }
+  const cutoff = new Date(Date.parse(today) - MAX_STORY_AGE_DAYS * 864e5).toISOString().slice(0, 10);
+  return (Array.isArray(items) ? items : [])
+    .filter((s) => s && typeof s.headline === 'string' && Array.isArray(s.facts) && s.facts.length)
+    .map((s) => ({
+      headline: s.headline.trim(),
+      date: /^\d{4}-\d{2}-\d{2}$/.test(s.date) ? s.date : '',
+      facts: s.facts.map(String).slice(0, 10),
+      sources: (Array.isArray(s.sources) ? s.sources : []).map(String).filter((u) => /^https?:\/\//.test(u)),
+    }))
+    // Drop stale or undated stories so a "latest news" post is really this week's.
+    .filter((s) => s.date && s.date >= cutoff && s.date <= today);
+}
+
+const articlePrompt = (story, posts, linkable, today) => `You are a senior technical writer at Wynex Technologies, a software development agency in Patna, India. Write ONE SEO-optimized blog article about this week's AI news story below. Today is ${today}.
+
+NEWS STORY (use ONLY these facts — do not invent numbers, dates, features, prices or quotes; if a detail isn't here, leave it out):
+Headline: ${story.headline}
+Announced: ${story.date}
+Facts:
+${story.facts.map((f) => `- ${f}`).join('\n')}
+
+Write it for business owners, product teams and developers who just heard the news and are searching for it. Structure:
+- A 2-3 sentence hook that says what was announced and why it matters.
+- ## What was announced — the key facts, clearly.
+- ## What's new / how it compares — what changed versus earlier versions or competitors (only where the facts support it).
+- ## What it means for businesses and developers — practical impact, including for teams in India.
+- ## How to try it or prepare — concrete next steps.
+- ## The takeaway
+Mix short paragraphs with bullet lists. Do NOT add a "Sources" section — it is added automatically.
+
+Title: specific and searchable — name the company and product/model (e.g. "Google Gemini 3.5 Is Here: What's New and What It Means for Your Business"). No clickbait, no "Optimizing"/"Mastering" openers.
+
+Already published (don't repeat these topics):
+${posts.length ? posts.map((p) => `- ${p.title}`).join('\n') : '- (none yet)'}
+
+Internal links: only if genuinely relevant, link 1-2 of these articles inline using the exact path shown; otherwise skip:
+${linkable.length ? linkable.map((p) => `- [${p.title}](/blog/${p.slug})`).join('\n') : '- (none)'}
+
+Requirements: 800-1200 words of Markdown in "content" (no H1); a 140-160 character meta description with the main keyword; 5-8 keywords; category "AI".
+
+Return only the structured JSON object.`;
+
+/** Keep source links that actually resolve; hallucinated URLs usually 404. */
+async function verifiedSources(urls) {
+  const out = [];
+  for (const url of [...new Set(urls)]) {
+    if (/vertexaisearch\.cloud\.google\.com/.test(url)) continue; // internal grounding redirects
+    try {
+      const res = await fetch(url, {
+        method: 'GET',
+        redirect: 'follow',
+        signal: AbortSignal.timeout(10000),
+        headers: { 'user-agent': 'Mozilla/5.0 (compatible; WynexBlogBot/1.0; +https://wynextechnologies.com)' },
+      });
+      // Some publishers block bots with 401/403/429; that still proves the page exists.
+      if (res.status !== 404 && res.status !== 410 && res.status < 500) out.push(url);
+      else console.warn(`  source dropped (${res.status}): ${url}`);
+    } catch {
+      console.warn(`  source dropped (unreachable): ${url}`);
+    }
+    if (out.length >= 4) break;
+  }
+  return out;
+}
+
+const sourceLabel = (url) => {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return url;
+  }
+};
+
 async function main() {
   // .trim() self-heals the #1 CI failure: a trailing space/newline pasted into
   // the GitHub secret, which makes Google reject the key with a 400/403.
@@ -254,37 +356,12 @@ async function main() {
 
   const ai = new GoogleGenAI({ apiKey });
   const posts = existingPosts();
-  // The 24 most recent posts are offered as internal-link targets.
   const linkable = posts.slice(0, 24);
-  const category = pickCategory(posts);
-
-  const buildPrompt = (rejected) => `You are a senior technical writer and SEO specialist for Wynex Technologies, a premium software development agency.
-
-Write ONE fresh, genuinely useful, SEO-optimized blog article about a current software/technology topic in the "${category}" category. Choose a specific, practical angle that developers, founders or product leaders would search for.
-
-Every topic below is ALREADY PUBLISHED. Do NOT write about any of them again — not even reworded, narrowed, or from a slightly different angle. Pick a clearly different subject:
-${posts.length ? posts.map((p) => `- ${p.title}`).join('\n') : '- (none yet)'}
-${
-  rejected.length
-    ? `\nThese titles you proposed were REJECTED as duplicates — do not propose them or anything close to them:\n${rejected.map((r) => `- "${r.title}" (too close to "${r.of}")`).join('\n')}\n`
-    : ''
-}
-Avoid formulaic titles that start with "Optimizing" or "Mastering"; write a specific, natural headline instead.
-
-INTERNAL LINKING — you MUST weave 2-3 contextual internal links into the body, pointing to the most topically relevant of these already-published articles. Use the exact path shown. Only link where it genuinely helps the reader; place each link naturally inside a sentence.
-${linkable.length ? linkable.map((p) => `- [${p.title}](/blog/${p.slug})${p.category ? `  (${p.category})` : ''}`).join('\n') : '- (none yet — skip internal links this time)'}
-
-Requirements:
-- Expert, human, non-generic voice. Concrete and actionable, not fluffy.
-- Strong SEO: a searchable title, a 140-160 char meta description containing the primary keyword, 5-8 relevant keywords, semantic H2/H3 structure, and natural keyword usage.
-- 800-1200 words of Markdown in "content" (no H1). Deliberately MIX descriptive prose with point-wise structure: pair short explanatory paragraphs with bullet or numbered lists throughout. End with a "## The takeaway".
-- Include the 2-3 required internal links inline, plus at least one list. Do NOT link to topics that aren't in the list above.
-- Set "category" to "${category}".
-
-Return only the structured JSON object.`;
+  const category = 'AI';
+  const today = new Date().toISOString().slice(0, 10);
 
   const config = {
-    temperature: 0.9,
+    temperature: 0.8,
     maxOutputTokens: 8192,
     responseMimeType: 'application/json',
     responseSchema,
@@ -309,39 +386,51 @@ Return only the structured JSON object.`;
     throw lastErr;
   }
 
-  // Regenerate (telling the model what it repeated) until the topic is new.
-  // Publishing nothing beats publishing a duplicate, so give up after a few tries.
+  // 1. Research: this week's AI news via Google Search grounding.
+  const { response: researchRes } = await generate(researchPrompt(today), RESEARCH_CONFIG);
+  const stories = parseStories(researchRes.text || '', today);
+  console.log(`Research: ${stories.length} fresh AI stories found`);
+  for (const s of stories) console.log(`  - [${s.date}] ${s.headline}`);
+  if (!stories.length) {
+    console.error('\nNo article published: the news search returned no AI stories from the last 10 days.');
+    process.exit(1);
+  }
+
+  // 2. Write about the most important story we haven't covered yet.
   const MAX_ATTEMPTS = 3;
-  const rejected = [];
-  let post, usedModel;
-  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    const { response, model } = await generate(buildPrompt(rejected));
+  let post, usedModel, story;
+  let attempts = 0;
+  for (const s of stories) {
+    const already = findDuplicate({ title: s.headline, slug: slugify(s.headline) }, posts);
+    if (already) {
+      console.warn(`Skipping "${s.headline}" — already covered by "${already.post.title}" (${already.reason}).`);
+      continue;
+    }
+    if (++attempts > MAX_ATTEMPTS) break;
+    const { response, model } = await generate(articlePrompt(s, posts, linkable, today));
     const raw = response.text;
     if (!raw) {
       console.error('No text returned. Finish reason:', response.candidates?.[0]?.finishReason);
-      console.error('Prompt feedback:', JSON.stringify(response.promptFeedback));
-      process.exit(1);
+      continue;
     }
-
     const candidate = JSON.parse(raw.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim());
     candidate.slug = slugify(candidate.slug || candidate.title);
-
     const dup = findDuplicate(candidate, posts);
-    if (!dup) {
-      post = candidate;
-      usedModel = model;
-      break;
+    if (dup) {
+      console.warn(`"${candidate.title}" duplicates "${dup.post.title}" (${dup.reason}); trying the next story.`);
+      continue;
     }
-    console.warn(`Attempt ${attempt}: "${candidate.title}" duplicates "${dup.post.title}" (${dup.reason}).`);
-    rejected.push({ title: candidate.title, of: dup.post.title });
+    post = candidate;
+    usedModel = model;
+    story = s;
+    break;
   }
   if (!post) {
-    console.error(`\nNo article published: every attempt repeated an existing topic (${MAX_ATTEMPTS} tries).`);
+    console.error('\nNo article published: every fresh story was already covered or failed to generate.');
     process.exit(1);
   }
 
   // Normalise + enrich
-  const today = new Date().toISOString().slice(0, 10);
   post.id = post.slug;
   post.category = category;
 
@@ -369,6 +458,15 @@ Return only the structured JSON object.`;
     },
   );
 
+  // Cite the news sources (only links that actually resolve).
+  const sources = await verifiedSources(story.sources);
+  if (sources.length) {
+    const list = sources.map((u) => `- [${sourceLabel(u)}](${u})`).join('\n');
+    post.content += `\n\n## Sources\n\n${list}`;
+  } else {
+    console.warn('  ⚠ no source links could be verified');
+  }
+
   // Structural quality gate: a good article needs H2 sections, at least one
   // list, and (when there are posts to link) real internal links. We warn
   // loudly rather than fail the run so a scheduled post is never blocked, but the
@@ -387,6 +485,21 @@ Return only the structured JSON object.`;
   post.author = 'Wynex Editorial';
   const imgId = pick(IMAGES[post.category] || IMAGES.Web);
   post.image = `https://images.unsplash.com/photo-${imgId}?auto=format&fit=crop&w=1200&q=70`;
+
+  if (process.env.DRY_RUN) {
+    console.log(`
+[dry run] Not saved. Model: ${usedModel}
+Story: ${story.headline} (${story.date})
+Title: ${post.title}
+Slug: ${post.slug}
+Meta: ${post.metaDescription}
+Words: ${words}
+
+${post.content.slice(0, 1500)}
+…
+${post.content.slice(-600)}`);
+    return;
+  }
 
   fs.mkdirSync(BLOG_DIR, { recursive: true });
   let file = path.join(BLOG_DIR, `${today}-${post.slug}.json`);
