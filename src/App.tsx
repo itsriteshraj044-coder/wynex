@@ -32,13 +32,6 @@ function jumpToTop() {
   window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
 }
 
-/**
- * Every page opens at the top — or at its #section when the URL has one. Route
- * changes are handled once the old page has faded out (onPageExit below), so the
- * new page never shows up mid-scroll. This covers the rest: the first load (incl.
- * a shared /#faq link), the browser restoring the old position on reload, and
- * clicking the link of the page you're already on.
- */
 /** Runs after the old page has faded out, just before the new one mounts. */
 function onPageExit() {
   const { hash } = window.location;
@@ -47,6 +40,13 @@ function onPageExit() {
   else jumpToTop();
 }
 
+/**
+ * Every page opens at the top — or at its #section when the URL has one. Route
+ * changes are handled once the old page has faded out (onPageExit above), so the
+ * new page never shows up mid-scroll. This covers the rest: the first load (incl.
+ * a shared /#faq link), the browser restoring the old position on reload, and
+ * clicking the link of the page you're already on.
+ */
 function ScrollToTop() {
   const { pathname, hash, key } = useLocation();
   const lastPath = useRef(pathname);
