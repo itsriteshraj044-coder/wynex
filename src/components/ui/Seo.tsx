@@ -6,7 +6,7 @@ interface Props {
   path?: string;
 }
 
-const BASE = 'https://wynex-seven.vercel.app';
+const BASE = 'https://wynextechnologies.com';
 
 export default function Seo({ title, description, path = '/' }: Props) {
   const desc = description ?? 'Wynex Technologies — premium software development agency for web, mobile, cloud and AI.';

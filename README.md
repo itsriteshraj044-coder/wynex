@@ -58,8 +58,8 @@ public/          favicon, manifest, robots.txt, sitemap.xml
 The Insights section, `/blog` index and `/blog/:slug` article pages are driven by JSON files in
 `src/content/blog/`. `scripts/generate-blog.mjs` uses the **Google Gemini API** (`@google/genai`,
 `gemini-flash-latest`) with structured JSON output to generate one SEO-optimized article per run, and
-`.github/workflows/daily-blog.yml` runs it **daily** and commits the result — which triggers a
-redeploy that publishes the new post.
+`.github/workflows/daily-blog.yml` runs it **daily** and commits the result — and then deploys the
+site to Hostinger so the new post goes live.
 
 ```bash
 cp .env.example .env      # add your GEMINI_API_KEY (from https://aistudio.google.com/apikey)
@@ -69,29 +69,29 @@ npm run generate:blog     # writes a new article into src/content/blog/
 For CI, add `GEMINI_API_KEY` as a GitHub Actions secret (repo → Settings → Secrets → Actions).
 Optionally set `GEMINI_MODEL` (e.g. `gemini-pro-latest`) to change the model.
 
-## Deployment
+## Deployment (Hostinger)
 
-This is a static SPA — deploy the `dist/` output to any static host. Config files for the two
-most common hosts are included, both with the **SPA rewrite** that keeps client-side routes
-(`/blog/:slug`, `/privacy`, …) working on direct load / refresh.
+The site is a static SPA hosted on Hostinger at https://wynextechnologies.com.
+`.github/workflows/deploy.yml` builds it and uploads `dist/` to `public_html/` over FTP on every push
+to `main`, and the daily blog workflow calls it after committing each new article, so posts go live
+with no manual step.
 
-### Vercel (`vercel.json` included)
-1. Import the GitHub repo at [vercel.com/new](https://vercel.com/new) — the Vite preset is auto-detected.
-2. Add the `ANTHROPIC_API_KEY` env var if you want the blog script to run there too (optional; CI already handles daily generation).
-3. Deploy. Every push (including the daily blog commit) redeploys automatically.
+One-time setup in the repo's Settings → Secrets and variables → Actions:
 
-### Netlify (`netlify.toml` included)
-1. "Add new site → Import from Git", pick the repo. Build command `npm run build`, publish dir `dist` (already set in `netlify.toml`).
-2. Deploy. Auto-deploys on every push.
+- **Secrets:** `FTP_SERVER`, `FTP_USERNAME`, `FTP_PASSWORD` (hPanel → Files → FTP Accounts) and `GEMINI_API_KEY`.
+- **Variables (optional):** `FTP_SERVER_DIR` — upload folder, default `public_html/` (use `./` if the FTP
+  account's root already is `public_html`); `FTP_PROTOCOL` — `ftps` by default, set `ftp` if TLS fails.
 
-Manual / other hosts:
+`public/.htaccess` (copied into `dist/`) handles the SPA fallback so `/blog/:slug` etc. work on direct load,
+forces `https://` without `www`, 301-redirects removed blog URLs, and sets cache headers.
+`dist/sitemap.xml` is generated on every build by `scripts/generate-sitemap.mjs`.
+
+Don't delete `.ftp-deploy-sync-state.json` from `public_html/` — the deploy uses it to upload only changed files.
 
 ```bash
 npm run build     # outputs to dist/
 npm run preview   # preview the production build locally
 ```
-
-Serve `dist/` behind a catch-all rewrite to `index.html` so client-side routes resolve.
 
 ## Notes / next steps
 

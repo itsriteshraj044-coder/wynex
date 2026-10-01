@@ -1,8 +1,8 @@
 name: Daily AI Blog
 
 # Generates exactly ONE SEO-optimized article per day with Gemini and pushes it.
-# Fully hands-off: the push below commits straight to the repo, which triggers
-# your host (Vercel/Netlify/Pages) to rebuild and publish. You never push manually.
+# Fully hands-off: the article is committed to the repo, then the deploy job
+# rebuilds the site and uploads it to Hostinger. You never push manually.
 
 on:
   schedule:
@@ -19,6 +19,8 @@ concurrency:
 jobs:
   generate:
     runs-on: ubuntu-latest
+    outputs:
+      published: ${{ steps.commit.outputs.published }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,7 +28,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
@@ -43,9 +45,10 @@ jobs:
           npm run generate:blog
 
       - name: Commit & push the new article
+        id: commit
         run: |
           git config user.name "wynex-bot"
-          git config user.email "bot@wynex-seven.vercel.app"
+          git config user.email "wynex-bot@users.noreply.github.com"
           git add src/content/blog/
           if git diff --staged --quiet; then
             echo "No new article generated — nothing to publish."
@@ -56,4 +59,12 @@ jobs:
           # Explicit token auth so the push always succeeds.
           git remote set-url origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
           git push origin "HEAD:${{ github.ref_name }}"
+          echo "published=true" >> "$GITHUB_OUTPUT"
           echo "✅ Published: $NEW_FILE"
+
+  # A push made with GITHUB_TOKEN doesn't trigger other workflows, so deploy here.
+  deploy:
+    needs: generate
+    if: needs.generate.outputs.published == 'true'
+    uses: ./.github/workflows/deploy.yml
+    secrets: inherit

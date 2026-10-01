@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { motion } from 'framer-motion';
-import CountUp from 'react-countup';
+import CountUp from '../ui/CountUp';
 import { Gauge, ShieldCheck, Rocket, HeartHandshake, Layers, Clock, type LucideIcon } from 'lucide-react';
 import SectionHeading from '../ui/SectionHeading';
 import { cn } from '../../utils/cn';

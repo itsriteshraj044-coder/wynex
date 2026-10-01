@@ -1,4 +1,4 @@
-import CountUp from 'react-countup';
+import CountUp from '../ui/CountUp';
 import { useInView } from 'react-intersection-observer';
 import { motion } from 'framer-motion';
 import { STATS } from '../../constants/content';

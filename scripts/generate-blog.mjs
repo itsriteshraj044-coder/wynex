@@ -45,6 +45,51 @@ function slugify(s) {
     .slice(0, 80);
 }
 
+// Topic-similarity guard. Generic filler ("Optimizing", "Mastering", "Strategies",
+// "High-Scale", …) is ignored so reworded repeats of the same topic still match.
+const TITLE_STOPWORDS = new Set(
+  'a an and the of for in on with to at by from into via your how why what when using use guide building build architecting architect designing design implementing implement mastering master optimizing optimize optimization improving scaling scale scalable modern advanced high large enterprise production strategies strategy patterns pattern practices best performance resilient reliable effective efficient handling'.split(' '),
+);
+function titleWords(title) {
+  return new Set(
+    title
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .split(/\s+/)
+      .filter((w) => w && !/^\d{4}$/.test(w) && !TITLE_STOPWORDS.has(w))
+      .map((w) => w.replace(/(ing|es|s)$/, '')),
+  );
+}
+// Jaccard similarity of the meaningful words in two titles (0 – 1).
+function titleSimilarity(a, b) {
+  const A = titleWords(a);
+  const B = titleWords(b);
+  let shared = 0;
+  for (const w of A) if (B.has(w)) shared++;
+  return shared / (A.size + B.size - shared) || 0;
+}
+// Calibrated on this blog's history: true repeats scored ≥ 0.71, while
+// related-but-distinct angles (e.g. tracing setup vs. tracing overhead) scored ≤ 0.6.
+const DUPLICATE_THRESHOLD = 0.65;
+
+function findDuplicate(candidate, posts) {
+  for (const p of posts) {
+    if (p.slug === candidate.slug) return { post: p, reason: 'same URL slug' };
+    const score = titleSimilarity(candidate.title, p.title);
+    if (score >= DUPLICATE_THRESHOLD) return { post: p, reason: `${Math.round(score * 100)}% title overlap` };
+  }
+  return null;
+}
+
+// Steer toward the category used least in recent posts so the blog doesn't
+// collapse into one or two topics.
+function pickCategory(posts, window = 14) {
+  const counts = Object.fromEntries(CATEGORIES.map((c) => [c, 0]));
+  for (const p of posts.slice(0, window)) if (p.category in counts) counts[p.category]++;
+  const least = Math.min(...Object.values(counts));
+  return pick(CATEGORIES.filter((c) => counts[c] === least));
+}
+
 // Cleans model output so we never publish raw escape sequences or messy
 // whitespace. Markdown is stored with REAL newlines in JSON (JSON.stringify
 // re-escapes them to \n on disk, which react-markdown renders correctly).
@@ -135,16 +180,22 @@ async function main() {
 
   const ai = new GoogleGenAI({ apiKey });
   const posts = existingPosts();
-  const avoid = posts.slice(0, 40);
   // The 24 most recent posts are offered as internal-link targets.
   const linkable = posts.slice(0, 24);
+  const category = pickCategory(posts);
 
-  const prompt = `You are a senior technical writer and SEO specialist for Wynex Technologies, a premium software development agency.
+  const buildPrompt = (rejected) => `You are a senior technical writer and SEO specialist for Wynex Technologies, a premium software development agency.
 
-Write ONE fresh, genuinely useful, SEO-optimized blog article about a current software/technology topic. Choose a specific, practical angle that developers, founders or product leaders would search for — e.g. web performance, React/Next.js patterns, AI/LLM engineering, cloud/DevOps, mobile, UX/design engineering, security, or developer productivity.
+Write ONE fresh, genuinely useful, SEO-optimized blog article about a current software/technology topic in the "${category}" category. Choose a specific, practical angle that developers, founders or product leaders would search for.
 
-Make it distinct from these already-published titles (do NOT repeat their topics):
-${avoid.length ? avoid.map((p) => `- ${p.title}`).join('\n') : '- (none yet)'}
+Every topic below is ALREADY PUBLISHED. Do NOT write about any of them again — not even reworded, narrowed, or from a slightly different angle. Pick a clearly different subject:
+${posts.length ? posts.map((p) => `- ${p.title}`).join('\n') : '- (none yet)'}
+${
+  rejected.length
+    ? `\nThese titles you proposed were REJECTED as duplicates — do not propose them or anything close to them:\n${rejected.map((r) => `- "${r.title}" (too close to "${r.of}")`).join('\n')}\n`
+    : ''
+}
+Avoid formulaic titles that start with "Optimizing" or "Mastering"; write a specific, natural headline instead.
 
 INTERNAL LINKING — you MUST weave 2-3 contextual internal links into the body, pointing to the most topically relevant of these already-published articles. Use the exact path shown. Only link where it genuinely helps the reader; place each link naturally inside a sentence.
 ${linkable.length ? linkable.map((p) => `- [${p.title}](/blog/${p.slug})${p.category ? `  (${p.category})` : ''}`).join('\n') : '- (none yet — skip internal links this time)'}
@@ -154,7 +205,7 @@ Requirements:
 - Strong SEO: a searchable title, a 140-160 char meta description containing the primary keyword, 5-8 relevant keywords, semantic H2/H3 structure, and natural keyword usage.
 - 800-1200 words of Markdown in "content" (no H1). Deliberately MIX descriptive prose with point-wise structure: pair short explanatory paragraphs with bullet or numbered lists throughout. End with a "## The takeaway".
 - Include the 2-3 required internal links inline, plus at least one list. Do NOT link to topics that aren't in the list above.
-- Pick the single best-fitting category from the allowed list.
+- Set "category" to "${category}".
 
 Return only the structured JSON object.`;
 
@@ -168,35 +219,57 @@ Return only the structured JSON object.`;
   // track whatever this key is entitled to, avoiding version-specific 404s).
   const candidates = [MODEL, 'gemini-flash-lite-latest', 'gemini-pro-latest'].filter((m, i, a) => a.indexOf(m) === i);
 
-  let response, usedModel, lastErr;
-  for (const m of candidates) {
-    try {
-      response = await generateWithRetry(ai, m, prompt, config);
-      usedModel = m;
-      break;
-    } catch (e) {
-      lastErr = e;
-      const status = Number(e?.status ?? e?.code);
-      // Auth / bad-request problems won't be fixed by trying another model.
-      if ([400, 401, 403].includes(status)) throw e;
-      console.warn(`Model "${m}" failed (${status || 'error'}); trying next…`);
+  async function generate(prompt) {
+    let lastErr;
+    for (const m of candidates) {
+      try {
+        return { response: await generateWithRetry(ai, m, prompt, config), model: m };
+      } catch (e) {
+        lastErr = e;
+        const status = Number(e?.status ?? e?.code);
+        // Auth / bad-request problems won't be fixed by trying another model.
+        if ([400, 401, 403].includes(status)) throw e;
+        console.warn(`Model "${m}" failed (${status || 'error'}); trying next…`);
+      }
     }
+    throw lastErr;
   }
-  if (!response) throw lastErr;
 
-  const raw = response.text;
-  if (!raw) {
-    console.error('No text returned. Finish reason:', response.candidates?.[0]?.finishReason);
-    console.error('Prompt feedback:', JSON.stringify(response.promptFeedback));
+  // Regenerate (telling the model what it repeated) until the topic is new.
+  // Publishing nothing beats publishing a duplicate, so give up after a few tries.
+  const MAX_ATTEMPTS = 3;
+  const rejected = [];
+  let post, usedModel;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const { response, model } = await generate(buildPrompt(rejected));
+    const raw = response.text;
+    if (!raw) {
+      console.error('No text returned. Finish reason:', response.candidates?.[0]?.finishReason);
+      console.error('Prompt feedback:', JSON.stringify(response.promptFeedback));
+      process.exit(1);
+    }
+
+    const candidate = JSON.parse(raw.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim());
+    candidate.slug = slugify(candidate.slug || candidate.title);
+
+    const dup = findDuplicate(candidate, posts);
+    if (!dup) {
+      post = candidate;
+      usedModel = model;
+      break;
+    }
+    console.warn(`Attempt ${attempt}: "${candidate.title}" duplicates "${dup.post.title}" (${dup.reason}).`);
+    rejected.push({ title: candidate.title, of: dup.post.title });
+  }
+  if (!post) {
+    console.error(`\nNo article published: every attempt repeated an existing topic (${MAX_ATTEMPTS} tries).`);
     process.exit(1);
   }
 
-  const post = JSON.parse(raw.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim());
-
   // Normalise + enrich
   const today = new Date().toISOString().slice(0, 10);
-  post.slug = slugify(post.slug || post.title);
   post.id = post.slug;
+  post.category = category;
 
   // Clean up escape sequences / stray fences / whitespace before anything else.
   post.content = sanitizeContent(post.content);
