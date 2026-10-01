@@ -150,20 +150,28 @@ const responseSchema = {
   propertyOrdering: ['title', 'slug', 'excerpt', 'metaDescription', 'keywords', 'category', 'tags', 'readTime', 'content'],
 };
 
-// Retry a single model on 429 (rate limit) with backoff; other errors bubble up.
+// Retry a single model with backoff on rate limits (429) and on Google's
+// transient "overloaded" errors (500/503); other errors bubble up.
+const RETRYABLE = new Set([429, 500, 503]);
 async function generateWithRetry(ai, model, contents, config) {
   const waitsMs = [0, 20000, 40000]; // before attempts 1, 2, 3
   let lastErr;
   for (let i = 0; i < waitsMs.length; i++) {
     if (waitsMs[i]) {
-      console.warn(`Rate limited on "${model}" — waiting ${waitsMs[i] / 1000}s then retrying…`);
+      const status = Number(lastErr?.status ?? lastErr?.code);
+      const why = status === 429 ? 'Rate limited' : `Got ${status} (overloaded)`;
+      console.warn(`${why} on "${model}" — waiting ${waitsMs[i] / 1000}s then retrying…`);
       await new Promise((r) => setTimeout(r, waitsMs[i]));
     }
     try {
       return await ai.models.generateContent({ model, contents, config });
     } catch (e) {
       lastErr = e;
-      if (Number(e?.status ?? e?.code) !== 429) throw e; // only retry rate limits
+      const status = Number(e?.status ?? e?.code);
+      if (!RETRYABLE.has(status)) throw e;
+      // A quota of 0 means this key can't use the model at all (e.g. Pro on the
+      // free tier); waiting won't help, so move on to the next model.
+      if (status === 429 && /limit: 0\b/.test(String(e?.message))) throw e;
     }
   }
   throw lastErr;
