@@ -79,7 +79,7 @@ export default function Navbar() {
           </div>
 
           {/* Desktop nav */}
-          <ul className="hidden items-center gap-1 lg:flex">
+          <ul className="hidden items-center gap-0.5 lg:flex xl:gap-1">
             {NAV_ITEMS.map((item) => (
               <li
                 key={item.label}
@@ -101,7 +101,7 @@ export default function Navbar() {
                     to={item.href}
                     aria-current={isActive(item.href) ? 'page' : undefined}
                     className={cn(
-                      'rounded-full px-4 py-2 text-sm font-semibold transition-colors',
+                      'whitespace-nowrap rounded-full px-3 py-2 text-sm font-semibold transition-colors xl:px-4',
                       isActive(item.href)
                         ? 'bg-brand-indigo/10 text-brand-indigo dark:bg-white/10 dark:text-white'
                         : 'text-ink/80 hover:text-ink dark:text-slate-300 dark:hover:text-white'
@@ -150,7 +150,7 @@ export default function Navbar() {
           <div className="flex items-center gap-2">
             <ThemeToggle className="hidden sm:grid" />
             <Magnetic className="hidden lg:block">
-              <button onClick={openModal} className="btn-primary">
+              <button onClick={openModal} className="btn-primary whitespace-nowrap lg:px-5 xl:px-7">
                 Start a project
                 <ArrowUpRight className="h-4 w-4" />
               </button>

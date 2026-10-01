@@ -19,6 +19,7 @@ export const SITE = {
 export const NAV_ITEMS: NavItem[] = [
   { label: 'Home', href: '/' },
   { label: 'About Us', href: '/about' },
+  { label: 'Work', href: '/work' },
   { label: 'Services', href: '/services' },
   { label: 'Process', href: '/process' },
   { label: 'Blog', href: '/blog' },

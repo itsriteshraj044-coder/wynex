@@ -20,7 +20,7 @@ const columns = [
     title: 'Company',
     links: [
       { label: 'About Us', href: '/about' },
-      { label: 'Our Work', href: '/#work' },
+      { label: 'Our Work', href: '/work' },
       { label: 'Process', href: '/process' },
       { label: 'Contact Us', href: '/contact' },
     ],
@@ -29,7 +29,7 @@ const columns = [
     title: 'Resources',
     links: [
       { label: 'Blog', href: '/blog' },
-      { label: 'Case Studies', href: '/#work' },
+      { label: 'Case Studies', href: '/work' },
       { label: 'FAQ', href: '/#faq' },
       { label: 'Privacy Policy', href: '/privacy' },
       { label: 'Terms of Service', href: '/terms' },
