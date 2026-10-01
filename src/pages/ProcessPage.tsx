@@ -1,7 +1,6 @@
 import { motion } from 'framer-motion';
 import { CheckCircle2, Clock, PackageCheck } from 'lucide-react';
 import Seo from '../components/ui/Seo';
-import PageHero from '../components/ui/PageHero';
 import SectionHeading from '../components/ui/SectionHeading';
 import Process from '../components/sections/Process';
 import CtaBanner from '../components/sections/CtaBanner';
@@ -16,15 +15,11 @@ export default function ProcessPage() {
         description="See how Wynex Technologies takes your project from idea to launch: discovery, design, development, deployment, optimisation and long-term support, with weekly demos and fixed quotes."
         path="/process"
       />
-      <PageHero
-        page="Process"
-        eyebrow="How we work"
-        title="A clear path from"
-        highlight="idea to launch."
-        subtitle="Six steps, weekly demos and no surprises. Here's exactly what happens at each stage — and what you get at the end of it."
-      />
 
-      <Process />
+      {/* The interactive process doubles as the page intro, so it gets room under the navbar. */}
+      <div className="pt-12">
+        <Process />
+      </div>
 
       {/* Step-by-step detail */}
       <section className="relative py-16 lg:py-24">
