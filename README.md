@@ -79,7 +79,7 @@ with no manual step.
 One-time setup in the repo's Settings → Secrets and variables → Actions:
 
 - **Secrets:** `FTP_SERVER`, `FTP_USERNAME`, `FTP_PASSWORD` (hPanel → Files → FTP Accounts) and `GEMINI_API_KEY`.
-- **Variables (optional):** `FTP_SERVER_DIR` — upload folder, default `public_html/` (use `./` if the FTP
+- **Optional (variable or secret):** `FTP_SERVER_DIR` — upload folder, default `public_html/` (use `./` if the FTP
   account's root already is `public_html`); `FTP_PROTOCOL` — `ftps` by default, set `ftp` if TLS fails.
 
 `public/.htaccess` (copied into `dist/`) handles the SPA fallback so `/blog/:slug` etc. work on direct load,
