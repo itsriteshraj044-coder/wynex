@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowUpRight, Clock } from 'lucide-react';
 import Seo from '../components/ui/Seo';
+import { PAGE_SEO } from '../constants/seo';
 import SectionHeading from '../components/ui/SectionHeading';
 import { BLOG_POSTS, formatDate } from '../utils/blog';
 import { cn } from '../utils/cn';
@@ -14,11 +15,7 @@ export default function BlogIndex() {
 
   return (
     <>
-      <Seo
-        title="Insights & Blog — Wynex Technologies"
-        description="Fresh, AI-authored engineering, design and AI insights from Wynex Technologies — updated daily."
-        path="/blog"
-      />
+      <Seo {...PAGE_SEO['/blog']} path="/blog" />
       <div className="pt-32">
         <div className="container-x">
           <SectionHeading

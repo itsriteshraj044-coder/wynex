@@ -1,7 +1,7 @@
 name: Deploy to Hostinger
 
 # Builds the site and uploads dist/ to Hostinger over FTP. Runs on every push to
-# main, on demand from the Actions tab, and from the Daily AI Blog workflow after
+# main, on demand from the Actions tab, and from the AI Blog workflow after
 # it commits a new article (its bot push can't trigger this workflow by itself).
 #
 # One-time setup — repo Settings → Secrets and variables → Actions:
@@ -38,7 +38,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
 
       - name: Install dependencies

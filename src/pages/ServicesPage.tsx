@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { CheckCircle2 } from 'lucide-react';
 import Seo from '../components/ui/Seo';
+import { PAGE_SEO } from '../constants/seo';
 import PageHero from '../components/ui/PageHero';
 import SectionHeading from '../components/ui/SectionHeading';
 import Services from '../components/sections/Services';
@@ -13,11 +14,7 @@ import { SERVICES } from '../constants/services';
 export default function ServicesPage() {
   return (
     <>
-      <Seo
-        title="Services — Website, App & Software Development | Wynex Technologies"
-        description="Website development, mobile apps, custom software, CRM/ERP, cloud, AI integration, UI/UX design and SEO from Wynex Technologies, Patna. One team from idea to launch and beyond."
-        path="/services"
-      />
+      <Seo {...PAGE_SEO['/services']} path="/services" />
       <PageHero
         page="Services"
         eyebrow="Our services"

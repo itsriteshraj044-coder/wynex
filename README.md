@@ -53,12 +53,14 @@ public/          favicon, manifest, robots.txt, sitemap.xml
   animated process timeline, pricing, FAQ accordion, blog, contact form + map placeholder
 - Accessibility: focus states, aria labels, `prefers-reduced-motion` respected
 
-## AI-authored daily blog
+## AI-authored blog
 
 The Insights section, `/blog` index and `/blog/:slug` article pages are driven by JSON files in
 `src/content/blog/`. `scripts/generate-blog.mjs` uses the **Google Gemini API** (`@google/genai`,
 `gemini-flash-latest`) with structured JSON output to generate one SEO-optimized article per run, and
-`.github/workflows/daily-blog.yml` runs it **daily** and commits the result — and then deploys the
+`.github/workflows/daily-blog.yml` runs it **three times a week** (Mon, Wed, Fri at 06:00 UTC), gives each draft a
+second "human editor" pass that rewrites AI-sounding phrasing (falling back to the draft if the edit
+drops links or sections), and commits the result — and then deploys the
 site to Hostinger so the new post goes live.
 
 ```bash
@@ -73,7 +75,7 @@ Optionally set `GEMINI_MODEL` (e.g. `gemini-pro-latest`) to change the model.
 
 The site is a static SPA hosted on Hostinger at https://wynextechnologies.com.
 `.github/workflows/deploy.yml` builds it and uploads `dist/` to `public_html/` over FTP on every push
-to `main`, and the daily blog workflow calls it after committing each new article, so posts go live
+to `main`, and the blog workflow calls it after committing each new article, so posts go live
 with no manual step.
 
 One-time setup in the repo's Settings → Secrets and variables → Actions:
@@ -84,7 +86,11 @@ One-time setup in the repo's Settings → Secrets and variables → Actions:
 
 `public/.htaccess` (copied into `dist/`) handles the SPA fallback so `/blog/:slug` etc. work on direct load,
 forces `https://` without `www`, 301-redirects removed blog URLs, and sets cache headers.
-`dist/sitemap.xml` is generated on every build by `scripts/generate-sitemap.mjs`.
+`dist/sitemap.xml` is generated on every build by `scripts/generate-sitemap.mjs`, and
+`scripts/prerender.ts` writes `dist/_pages/<route>.html` for every page and blog post — each with its own
+title, meta tags, canonical, Open Graph image and readable content — which `.htaccess` serves at the
+normal URLs so crawlers and link previews don't depend on JavaScript. SEO titles and descriptions live in
+`src/constants/seo.ts`, shared by the app and the prerenderer.
 
 Don't delete `.ftp-deploy-sync-state.json` from `public_html/` — the deploy uses it to upload only changed files.
 

@@ -1,12 +1,13 @@
-name: Daily AI Blog
+name: AI Blog
 
-# Generates exactly ONE SEO-optimized article per day with Gemini and pushes it.
+# Generates ONE SEO-optimized article per run with Gemini — three runs a week —
+# gives it a human editing pass, and pushes it.
 # Fully hands-off: the article is committed to the repo, then the deploy job
 # rebuilds the site and uploads it to Hostinger. You never push manually.
 
 on:
   schedule:
-    - cron: '0 6 * * *' # once per day at 06:00 UTC
+    - cron: '0 6 * * 1,3,5' # Mon, Wed & Fri at 06:00 UTC (11:30 IST)
   workflow_dispatch: {} # optional manual run from the Actions tab
 
 permissions:
@@ -28,7 +29,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
 
       - name: Install dependencies
@@ -55,7 +56,7 @@ jobs:
             exit 0
           fi
           NEW_FILE=$(git diff --staged --name-only | grep 'src/content/blog/' | tail -1)
-          git commit -m "content: daily AI blog article ($(date -u +%Y-%m-%d))"
+          git commit -m "content: AI blog article ($(date -u +%Y-%m-%d))"
           # Explicit token auth so the push always succeeds.
           git remote set-url origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
           git push origin "HEAD:${{ github.ref_name }}"

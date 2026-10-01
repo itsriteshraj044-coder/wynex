@@ -1,4 +1,5 @@
 import Seo from '../components/ui/Seo';
+import { PAGE_SEO } from '../constants/seo';
 import Hero from '../components/sections/Hero';
 import StoryScroll from '../components/sections/StoryScroll';
 import TrustedBy from '../components/sections/TrustedBy';
@@ -17,11 +18,7 @@ import Contact from '../components/sections/Contact';
 export default function Home() {
   return (
     <>
-      <Seo
-        title="Wynex Technologies — Award-Winning Web, App & AI Development Agency"
-        description="Premium software development agency crafting high-performance websites, web & mobile apps, custom software, cloud and AI solutions for ambitious brands worldwide."
-        path="/"
-      />
+      <Seo {...PAGE_SEO['/']} path="/" />
       <Hero />
       <TrustedBy />
       <StoryScroll />

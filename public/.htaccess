@@ -20,6 +20,15 @@ RewriteRule ^blog/optimizing-database-query-performance-with-advanced-indexing-s
 RewriteRule ^blog/optimizing-database-connection-pooling-and-resilient-failover-in-distributed-mic/?$ /blog/mastering-connection-pooling-resilient-failover-distributed-microservices [L,R=301]
 RewriteRule ^blog/optimizing-postgresql-connection-pooling-resilient-failover-distributed-microser/?$ /blog/mastering-connection-pooling-resilient-failover-distributed-microservices [L,R=301]
 
+# --- Pre-rendered pages (written by scripts/prerender.ts) -------------------------
+# /about -> /_pages/about.html, /blog/<slug> -> /_pages/blog/<slug>.html, / -> /_pages/index.html.
+# Each has the page's own title, meta tags and content for crawlers and link
+# previews; React takes over once it loads. Anything without a file falls through
+# to the SPA fallback below.
+RewriteRule ^$ /_pages/index.html [L]
+RewriteCond %{DOCUMENT_ROOT}/_pages%{REQUEST_URI}.html -f
+RewriteRule ^(.+?)/?$ /_pages/$1.html [L]
+
 # --- SPA fallback ---------------------------------------------------------------
 # Client-side routes (/blog, /blog/:slug, /privacy, …) load index.html. Requests
 # for real files, or anything with a file extension, are left alone so a missing

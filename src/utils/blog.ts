@@ -2,7 +2,7 @@ import type { BlogPost } from '../types';
 
 /**
  * Loads every article JSON in src/content/blog at build time.
- * The daily AI generation script writes new files here; a rebuild
+ * The AI blog generation script writes new files here; a rebuild
  * (triggered by the GitHub Action commit) publishes them.
  */
 const modules = import.meta.glob('../content/blog/*.json', { eager: true }) as Record<

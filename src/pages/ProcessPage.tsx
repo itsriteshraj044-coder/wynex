@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { CheckCircle2, Clock, PackageCheck } from 'lucide-react';
 import Seo from '../components/ui/Seo';
+import { PAGE_SEO } from '../constants/seo';
 import SectionHeading from '../components/ui/SectionHeading';
 import Process from '../components/sections/Process';
 import CtaBanner from '../components/sections/CtaBanner';
@@ -10,11 +11,7 @@ import { PROCESS_DETAILS, ENGAGEMENT_MODELS } from '../constants/pages';
 export default function ProcessPage() {
   return (
     <>
-      <Seo
-        title="Our Process — How We Build Websites & Apps | Wynex Technologies"
-        description="See how Wynex Technologies takes your project from idea to launch: discovery, design, development, deployment, optimisation and long-term support, with weekly demos and fixed quotes."
-        path="/process"
-      />
+      <Seo {...PAGE_SEO['/process']} path="/process" />
 
       {/* The interactive process doubles as the page intro, so it gets room under the navbar. */}
       <div className="pt-12">

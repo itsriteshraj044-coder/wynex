@@ -2,7 +2,7 @@
 /**
  * Writes dist/sitemap.xml after `vite build`. Static routes are listed below;
  * every article in src/content/blog/ is added automatically, so posts from the
- * daily blog workflow are in the sitemap as soon as their commit is deployed.
+ * AI blog workflow are in the sitemap as soon as their commit is deployed.
  *
  * Keep STATIC_ROUTES in sync with the <Route>s in src/App.tsx. Homepage
  * sections (#services, #work, …) are anchors, not pages, so they don't belong here.

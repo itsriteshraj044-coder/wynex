@@ -2,18 +2,13 @@ import { Fragment } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Mail } from 'lucide-react';
 import Seo from '../components/ui/Seo';
+import { PAGE_SEO, SITE_URL } from '../constants/seo';
 import { LEGAL } from '../constants/legal';
 import type { LegalBlock } from '../constants/legal';
 import { SITE } from '../constants/site';
 import { scrollToId } from '../utils/scroll';
 
-const DESCRIPTIONS = {
-  privacy: 'How Wynex Technologies collects, uses and protects personal data — your rights under India’s DPDP Act, the Google services we use, and how to contact our Grievance Officer.',
-  terms: 'The Terms & Conditions for using the Wynex Technologies website and for our client projects, quotes, payments and intellectual property.',
-  cookies: 'Which cookies and similar technologies the Wynex Technologies website and its embedded services use, and how to manage them.',
-};
-
-const SITE_ORIGIN = 'https://wynextechnologies.com';
+const SITE_ORIGIN = SITE_URL;
 
 /** Turn URLs and email addresses inside plain text into links. */
 function linkify(text: string) {
@@ -56,7 +51,7 @@ export default function Legal({ type }: { type: 'privacy' | 'terms' | 'cookies' 
 
   return (
     <>
-      <Seo title={`${doc.title} — Wynex Technologies`} description={DESCRIPTIONS[type]} path={`/${type}`} />
+      <Seo {...PAGE_SEO[`/${type}`]} path={`/${type}`} />
       <div className="pb-24 pt-36 lg:pt-44">
         <div className="container-x">
           <nav aria-label="Breadcrumb" className="mb-6">

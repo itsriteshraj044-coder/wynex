@@ -5,6 +5,7 @@ import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { ArrowLeft, ArrowUpRight, Clock, Calendar, User } from 'lucide-react';
 import Seo from '../components/ui/Seo';
+import { blogPostSeo, blogPostJsonLd } from '../constants/seo';
 import { getPostBySlug, relatedPosts, formatDate } from '../utils/blog';
 import { useModal } from '../context/ModalContext';
 import type { Components } from 'react-markdown';
@@ -40,29 +41,11 @@ export default function BlogPost() {
   if (!post) return <Navigate to="/blog" replace />;
 
   const related = relatedPosts(post.slug);
-  const url = `https://wynextechnologies.com/blog/${post.slug}`;
-
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'BlogPosting',
-    headline: post.title,
-    description: post.metaDescription ?? post.excerpt,
-    image: post.image,
-    datePublished: post.date,
-    dateModified: post.date,
-    author: { '@type': 'Organization', name: post.author ?? 'Wynex Technologies' },
-    publisher: {
-      '@type': 'Organization',
-      name: 'Wynex Technologies',
-      logo: { '@type': 'ImageObject', url: 'https://wynextechnologies.com/favicon.png' },
-    },
-    keywords: (post.keywords ?? post.tags ?? []).join(', '),
-    mainEntityOfPage: { '@type': 'WebPage', '@id': url },
-  };
+  const jsonLd = blogPostJsonLd(post);
 
   return (
     <>
-      <Seo title={`${post.title} — Wynex Technologies`} description={post.metaDescription ?? post.excerpt} path={`/blog/${post.slug}`} />
+      <Seo {...blogPostSeo(post)} path={`/blog/${post.slug}`} />
       <Helmet>
         <meta name="keywords" content={(post.keywords ?? post.tags ?? []).join(', ')} />
         <meta property="og:type" content="article" />

@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { ArrowUpRight } from 'lucide-react';
 import Seo from '../components/ui/Seo';
+import { PAGE_SEO } from '../constants/seo';
 import PageHero from '../components/ui/PageHero';
 import SectionHeading from '../components/ui/SectionHeading';
 import Work from '../components/sections/Work';
@@ -10,11 +11,7 @@ import { PROJECTS } from '../constants/content';
 export default function WorkPage() {
   return (
     <>
-      <Seo
-        title="Our Work — Websites, Apps & Software Projects | Wynex Technologies"
-        description="Explore websites, web apps, mobile apps and portfolios designed and built by Wynex Technologies, Patna — with the technologies behind each project."
-        path="/work"
-      />
+      <Seo {...PAGE_SEO['/work']} path="/work" />
       <PageHero
         page="Work"
         eyebrow="Our work"

@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { MapPin, BadgeCheck } from 'lucide-react';
 import Seo from '../components/ui/Seo';
+import { PAGE_SEO } from '../constants/seo';
 import PageHero from '../components/ui/PageHero';
 import SectionHeading from '../components/ui/SectionHeading';
 import WhyChooseUs from '../components/sections/WhyChooseUs';
@@ -12,11 +13,7 @@ import { SITE } from '../constants/site';
 export default function AboutPage() {
   return (
     <>
-      <Seo
-        title="About Us — Wynex Technologies"
-        description="Wynex Technologies is an MSME-registered software development company in Patna, Bihar, building websites, mobile apps and custom software for businesses in India and abroad."
-        path="/about"
-      />
+      <Seo {...PAGE_SEO['/about']} path="/about" />
       <PageHero
         page="About Us"
         eyebrow="About Wynex"

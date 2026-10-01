@@ -2,7 +2,7 @@
 /**
  * Generates one SEO-optimized tech blog article per run using the Google
  * Gemini API and writes it as JSON into src/content/blog/. Intended to run
- * daily via CI (see .github/workflows/daily-blog.yml); the commit it produces
+ * three times a week via CI (see .github/workflows/daily-blog.yml); the commit it produces
  * triggers a rebuild that publishes the new article.
  *
  * Requires: GEMINI_API_KEY in the environment (from Google AI Studio).
@@ -177,6 +177,72 @@ async function generateWithRetry(ai, model, contents, config) {
   throw lastErr;
 }
 
+// Words and phrases that make text read as machine-written.
+const AI_TICS = [
+  'delve', "in today's fast-paced", 'ever-evolving', 'landscape', 'realm', 'tapestry', 'crucial', 'pivotal',
+  'robust', 'seamless', 'leverage', 'harness', 'unlock', 'elevate', 'game-changer', 'game changer', 'cutting-edge',
+  'navigate the complexities', "it's important to note", 'it is important to note', 'moreover', 'furthermore',
+  'in conclusion', 'embark', 'paramount', 'myriad', 'plethora', 'testament to', 'foster', 'holistic', 'synergy',
+  'supercharge', 'unleash', 'revolutionize', 'in the world of', 'when it comes to',
+];
+
+const countTics = (text) => {
+  const lower = text.toLowerCase();
+  return AI_TICS.reduce((n, t) => n + (lower.split(t).length - 1), 0);
+};
+
+const EDIT_CONFIG = { temperature: 0.7, maxOutputTokens: 8192, responseMimeType: 'text/plain' };
+
+const editPrompt = (draft) => `You are a sharp human editor at Wynex Technologies, a software agency in Patna, India. Rewrite the article below so it reads like an experienced engineer wrote it for clients and fellow developers — natural, direct and specific — not like AI output.
+
+Do:
+- Vary sentence length; mix short punchy lines with longer explanations.
+- Use contractions and plain words. Address the reader as "you" where it fits.
+- Prefer concrete detail: real tools, numbers, trade-offs, a quick example from client work.
+- Cut filler, hedging and generic openers. Use em dashes sparingly.
+- Never use these words or phrases: ${AI_TICS.join(', ')}.
+
+Keep exactly:
+- The same facts and technical accuracy. Don't invent statistics, clients or quotes.
+- The Markdown structure: every ## and ### heading (you may reword them), lists, code blocks, and the final "## The takeaway" section.
+- Every Markdown link, with its URL unchanged — e.g. [text](/blog/some-slug). You may reword the anchor text.
+- Roughly the same length (within about 15%).
+
+Return only the edited Markdown article — no title, no notes, no code fences around it.
+
+ARTICLE:
+${draft}`;
+
+const links = (md) => [...md.matchAll(/\]\(([^)\s]+)\)/g)].map((m) => m[1]).sort();
+const wordCount = (md) => md.split(/\s+/).filter(Boolean).length;
+const h2Count = (md) => (md.match(/^##\s/gm) || []).length;
+
+/** Returns the edited article, or the draft unchanged if the edit fails a check. */
+async function humanize(draft, run) {
+  let edited;
+  try {
+    const { response } = await run(editPrompt(draft));
+    edited = sanitizeContent(response.text || '');
+  } catch (e) {
+    console.warn(`  ⚠ human edit skipped (model error: ${e?.message || e})`);
+    return draft;
+  }
+  const problems = [];
+  const before = links(draft);
+  const after = new Set(links(edited));
+  if (before.some((l) => !after.has(l))) problems.push('dropped a link');
+  const ratio = wordCount(edited) / Math.max(1, wordCount(draft));
+  if (ratio < 0.8 || ratio > 1.25) problems.push(`length changed ${Math.round((ratio - 1) * 100)}%`);
+  if (h2Count(edited) < h2Count(draft) - 1) problems.push('lost sections');
+  if (/^##\s+The takeaway/m.test(draft) && !/^##\s+The takeaway/m.test(edited)) problems.push('lost "The takeaway"');
+  if (problems.length) {
+    console.warn(`  ⚠ human edit rejected (${problems.join('; ')}) — publishing the original draft`);
+    return draft;
+  }
+  console.log(`  human edit: ${wordCount(draft)} → ${wordCount(edited)} words · AI phrases ${countTics(draft)} → ${countTics(edited)}`);
+  return edited;
+}
+
 async function main() {
   // .trim() self-heals the #1 CI failure: a trailing space/newline pasted into
   // the GitHub secret, which makes Google reject the key with a 400/403.
@@ -227,11 +293,11 @@ Return only the structured JSON object.`;
   // track whatever this key is entitled to, avoiding version-specific 404s).
   const candidates = [MODEL, 'gemini-flash-lite-latest', 'gemini-pro-latest'].filter((m, i, a) => a.indexOf(m) === i);
 
-  async function generate(prompt) {
+  async function generate(prompt, cfg = config) {
     let lastErr;
     for (const m of candidates) {
       try {
-        return { response: await generateWithRetry(ai, m, prompt, config), model: m };
+        return { response: await generateWithRetry(ai, m, prompt, cfg), model: m };
       } catch (e) {
         lastErr = e;
         const status = Number(e?.status ?? e?.code);
@@ -282,6 +348,10 @@ Return only the structured JSON object.`;
   // Clean up escape sequences / stray fences / whitespace before anything else.
   post.content = sanitizeContent(post.content);
 
+  // Human editing pass: a second, editor-style rewrite that strips AI tics and
+  // reads like a person wrote it. Falls back to the draft if anything looks off.
+  post.content = await humanize(post.content, (prompt) => generate(prompt, EDIT_CONFIG));
+
   // Guard interlinks: keep only Markdown links that point to a real /blog/<slug>
   // (and never to this same article). Unknown internal links are unwrapped to
   // plain text so we never publish a dead link.
@@ -301,7 +371,7 @@ Return only the structured JSON object.`;
 
   // Structural quality gate: a good article needs H2 sections, at least one
   // list, and (when there are posts to link) real internal links. We warn
-  // loudly rather than fail the run so a daily post is never blocked, but the
+  // loudly rather than fail the run so a scheduled post is never blocked, but the
   // signal is visible in CI logs.
   const hasHeadings = (post.content.match(/^##\s/gm) || []).length >= 2;
   const hasList = /^\s*([-*]|\d+\.)\s/m.test(post.content);
