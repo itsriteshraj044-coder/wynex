@@ -30,16 +30,6 @@ export interface Project {
   metric: { value: string; label: string };
 }
 
-export interface Testimonial {
-  id: string;
-  name: string;
-  role: string;
-  company: string;
-  quote: string;
-  avatar: string;
-  rating: number;
-}
-
 export interface Stat {
   value: number;
   suffix: string;

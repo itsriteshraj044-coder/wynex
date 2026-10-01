@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { CheckCircle2, Award, Users2, Globe2 } from 'lucide-react';
 import SectionHeading from '../ui/SectionHeading';
+import MoreLink, { type MoreLinkProps } from '../ui/MoreLink';
 
 const highlights = [
   'Senior, product-minded engineers & designers',
@@ -15,7 +16,7 @@ const badges = [
   { icon: Globe2, label: 'Global delivery', sub: 'US · EU · APAC' },
 ];
 
-export default function About() {
+export default function About({ more }: { more?: MoreLinkProps } = {}) {
   return (
     <section id="about" className="relative py-24 lg:py-32">
       <div className="container-x grid items-center gap-14 lg:grid-cols-2">
@@ -85,6 +86,7 @@ export default function About() {
               </div>
             ))}
           </div>
+          {more && <MoreLink {...more} className="mt-10 justify-start" />}
         </div>
       </div>
     </section>

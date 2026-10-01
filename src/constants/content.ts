@@ -1,5 +1,5 @@
 import { Compass, PenTool, Code2, Rocket, LineChart, Headphones } from 'lucide-react';
-import type { Project, Testimonial, Stat, ProcessStep, FAQItem, TechItem } from '../types';
+import type { Project, Stat, ProcessStep, FAQItem, TechItem } from '../types';
 
 export const PROJECTS: Project[] = [
   { id: 'p5', title: 'Roamigos Hostel', client: 'Roamigos', category: 'Web App', description: 'A vibrant and user-friendly website built for a traveling hostel, offering easy room discovery, booking, and local community guides.', tags: ['React', 'Next.js', 'TypeScript', 'Tailwind'], image: ['/projects/roamigos-1.png', '/projects/roamigos-2.png', '/projects/roamigos-3.png', '/projects/roamigos-4.png'], link: 'https://roamigos-hostels.vercel.app/', accent: 'from-orange-500 to-yellow-400', metric: { value: '2x', label: 'bookings' } },
@@ -11,16 +11,6 @@ export const PROJECTS: Project[] = [
 ];
 
 export const PROJECT_FILTERS = ['All', 'Web App', 'Portfolio', 'E-commerce', 'Mobile App', 'Software', 'Cloud & AI'] as const;
-
-const AV = (id: string) => `https://images.unsplash.com/photo-${id}?w=160&h=160&q=70&auto=format&fit=crop&crop=faces`;
-
-export const TESTIMONIALS: Testimonial[] = [
-  { id: 't1', name: 'Arjun Mehta', role: 'VP Engineering', company: 'SetuPay', quote: 'Wynex delivered a platform that outperformed our wildest expectations. The engineering rigour and design polish are simply world-class.', avatar: AV('1656221009909-4f202547cd94'), rating: 5 },
-  { id: 't2', name: 'Ananya Iyer', role: 'Chief Product Officer', company: 'Arogya Health', quote: 'From discovery to launch, the process felt effortless. The app our patients across India now depend on is beautiful and rock-solid.', avatar: AV('1656236607879-cd489955e17b'), rating: 5 },
-  { id: 't3', name: 'Rohan Gupta', role: 'Founder & CEO', company: 'BazaarKart', quote: 'Our conversions jumped 47% within a quarter. The team treats your business like their own — rare and invaluable.', avatar: AV('1724225618359-a1d2763326f9'), rating: 5 },
-  { id: 't4', name: 'Kavya Reddy', role: 'Head of Growth', company: 'GyaanAI', quote: 'The AI assistant Wynex built now resolves 90% of our tickets in Hindi and English. It paid for itself within weeks.', avatar: AV('1768221677463-191fc4e15690'), rating: 5 },
-  { id: 't5', name: 'Vikram Nair', role: 'CTO', company: 'Megh Systems', quote: 'They re-architected our entire cloud stack with zero downtime. 99.99% uptime speaks for itself.', avatar: AV('1638368349569-e49499196d9f'), rating: 5 },
-];
 
 export const STATS: Stat[] = [
   { value: 320, suffix: '+', label: 'Products shipped' },

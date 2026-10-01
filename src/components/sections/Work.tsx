@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowUpRight, Sparkles } from 'lucide-react';
 import { PROJECTS, PROJECT_FILTERS } from '../../constants/content';
 import { cn } from '../../utils/cn';
+import MoreLink, { type MoreLinkProps } from '../ui/MoreLink';
 
 const SectionHeading = ({ title, highlight }: { title: string, highlight: string }) => (
   <div className="flex flex-col items-start max-w-3xl">
@@ -56,7 +57,7 @@ const ProjectImage = ({ image, alt, className }: { image: string | string[], alt
   );
 };
 
-export default function Work() {
+export default function Work({ more }: { more?: MoreLinkProps } = {}) {
   const [filter, setFilter] = useState<(typeof PROJECT_FILTERS)[number]>('All');
   const [activeIdx, setActiveIdx] = useState(0);
 
@@ -233,6 +234,7 @@ export default function Work() {
 
         </div>
 
+        {more && <MoreLink {...more} />}
       </div>
     </section>
   );

@@ -4,8 +4,9 @@ import SectionHeading from '../ui/SectionHeading';
 import { PROCESS } from '../../constants/content';
 import { PROCESS_VECTORS } from './ProcessVectors';
 import { cn } from '../../utils/cn';
+import MoreLink, { type MoreLinkProps } from '../ui/MoreLink';
 
-export default function Process() {
+export default function Process({ more }: { more?: MoreLinkProps } = {}) {
   const [active, setActive] = useState(0);
   const total = PROCESS.length;
 
@@ -150,6 +151,7 @@ export default function Process() {
             </div>
           </div>
         </div>
+        {more && <MoreLink {...more} />}
       </div>
     </section>
   );

@@ -9,11 +9,9 @@ import WhyChooseUs from '../components/sections/WhyChooseUs';
 import Process from '../components/sections/Process';
 import Technologies from '../components/sections/Technologies';
 import Work from '../components/sections/Work';
-import Testimonials from '../components/sections/Testimonials';
 import Awards from '../components/sections/Awards';
 import FAQ from '../components/sections/FAQ';
 import Blog from '../components/sections/Blog';
-import Newsletter from '../components/sections/Newsletter';
 import Contact from '../components/sections/Contact';
 
 export default function Home() {
@@ -27,18 +25,16 @@ export default function Home() {
       <Hero />
       <TrustedBy />
       <StoryScroll />
-      <About />
-      <Services />
+      <About more={{ to: '/about', label: 'View full story' }} />
+      <Services more={{ to: '/services', label: 'Explore all services' }} />
       <Stats />
-      <Work />
+      <Work more={{ to: '/work', label: 'View all work' }} />
       <WhyChooseUs />
-      <Process />
+      <Process more={{ to: '/process', label: 'See our full process' }} />
       <Technologies />
-      <Testimonials />
       <Awards />
-      <FAQ />
+      <FAQ more={{ to: '/contact', label: 'Still have questions? Contact us' }} />
       <Blog />
-      <Newsletter />
       <Contact />
     </>
   );

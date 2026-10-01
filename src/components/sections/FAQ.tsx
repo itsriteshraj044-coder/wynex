@@ -3,8 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import SectionHeading from '../ui/SectionHeading';
 import { FAQS } from '../../constants/content';
+import MoreLink, { type MoreLinkProps } from '../ui/MoreLink';
 
-export default function FAQ() {
+export default function FAQ({ more }: { more?: MoreLinkProps } = {}) {
   const [open, setOpen] = useState<number | null>(0);
 
   return (
@@ -12,6 +13,7 @@ export default function FAQ() {
       <div className="container-x grid gap-12 lg:grid-cols-[0.9fr_1.1fr]">
         <div className="lg:sticky lg:top-28 lg:self-start">
           <SectionHeading align="left" eyebrow="FAQ" title="Questions," highlight="answered." subtitle="Everything you need to know before starting. Still curious? Just ask our team." />
+          {more && <MoreLink {...more} className="mt-8 justify-start" />}
         </div>
 
         <div className="flex flex-col gap-3">

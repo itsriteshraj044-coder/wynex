@@ -6,8 +6,9 @@ import TiltCard from '../ui/TiltCard';
 import { SERVICES, SERVICE_CATEGORIES } from '../../constants/services';
 import { useModal } from '../../context/ModalContext';
 import { cn } from '../../utils/cn';
+import MoreLink, { type MoreLinkProps } from '../ui/MoreLink';
 
-export default function Services() {
+export default function Services({ more }: { more?: MoreLinkProps } = {}) {
   const { openModal } = useModal();
   const [active, setActive] = useState<(typeof SERVICE_CATEGORIES)[number]>('All');
 
@@ -80,6 +81,7 @@ export default function Services() {
             ))}
           </AnimatePresence>
         </motion.div>
+        {more && <MoreLink {...more} />}
       </div>
     </section>
   );
