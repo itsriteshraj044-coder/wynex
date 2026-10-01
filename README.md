@@ -56,12 +56,21 @@ public/          favicon, manifest, robots.txt, sitemap.xml
 ## AI-authored blog
 
 The Insights section, `/blog` index and `/blog/:slug` article pages are driven by JSON files in
-`src/content/blog/`. `scripts/generate-blog.mjs` uses the **Google Gemini API** (`@google/genai`,
-`gemini-flash-latest`) with structured JSON output to generate one SEO-optimized article per run, and
-`.github/workflows/daily-blog.yml` runs it **three times a week** (Mon, Wed, Fri at 06:00 UTC), gives each draft a
-second "human editor" pass that rewrites AI-sounding phrasing (falling back to the draft if the edit
-drops links or sections), and commits the result — and then deploys the
-site to Hostinger so the new post goes live.
+`src/content/blog/`. `.github/workflows/daily-blog.yml` runs `scripts/generate-blog.mjs` **three times a
+week** (Mon, Wed, Fri at 06:00 UTC) to publish one article about **trending AI news**:
+
+1. Reads this week's AI headlines from news feeds (OpenAI, Google, Google DeepMind, TechCrunch AI,
+   The Verge AI, Hugging Face).
+2. Gemini (`@google/genai`, `gemini-flash-latest`) shortlists the stories people are searching for —
+   model launches, major features, pricing — skipping topics already published.
+3. Fetches the chosen article (or another outlet's coverage if the publisher blocks bots) and writes
+   the post using only its facts, with a business/India angle.
+4. A second "human editor" pass rewrites AI-sounding phrasing (falling back to the draft if the edit
+   drops links or sections), and the source article is linked at the end.
+5. Commits the post and deploys the site to Hostinger.
+
+Run it from the Actions tab with **dry_run** ticked to print an article without publishing it.
+Removed post URLs return 410 Gone (see `public/.htaccess`).
 
 ```bash
 cp .env.example .env      # add your GEMINI_API_KEY (from https://aistudio.google.com/apikey)
