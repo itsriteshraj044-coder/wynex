@@ -4,10 +4,11 @@ import { ArrowUpRight } from 'lucide-react';
 import SectionHeading from '../ui/SectionHeading';
 import TiltCard from '../ui/TiltCard';
 import { SERVICES, SERVICE_CATEGORIES } from '../../constants/services';
-import { scrollToId } from '../../utils/scroll';
+import { useModal } from '../../context/ModalContext';
 import { cn } from '../../utils/cn';
 
 export default function Services() {
+  const { openModal } = useModal();
   const [active, setActive] = useState<(typeof SERVICE_CATEGORIES)[number]>('All');
 
   const filtered = useMemo(
@@ -68,7 +69,7 @@ export default function Services() {
                       ))}
                     </div>
                     <button
-                      onClick={() => scrollToId('#contact')}
+                      onClick={openModal}
                       className="mt-5 flex items-center gap-1 text-sm font-semibold text-brand-indigo opacity-0 transition-opacity duration-300 group-hover:opacity-100"
                     >
                       Get started <ArrowUpRight className="h-4 w-4" />

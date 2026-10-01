@@ -17,20 +17,10 @@ export const SITE = {
 };
 
 export const NAV_ITEMS: NavItem[] = [
-  {
-    label: 'Services',
-    href: '/#services',
-    children: [
-      { label: 'Web Development', href: '/#services', description: 'Custom sites & web apps' },
-      { label: 'Mobile Apps', href: '/#services', description: 'iOS, Android & Flutter' },
-      { label: 'Custom Software', href: '/#services', description: 'ERP, CRM, HRMS & SaaS' },
-      { label: 'Cloud & AI', href: '/#services', description: 'DevOps, ML & automation' },
-      { label: 'UI/UX Design', href: '/#services', description: 'Product & brand design' },
-      { label: 'Growth & SEO', href: '/#services', description: 'Marketing & performance' },
-    ],
-  },
-  { label: 'Work', href: '/#work' },
-  { label: 'Process', href: '/#process' },
-  { label: 'About', href: '/#about' },
-  { label: 'Contact', href: '/contact' },
+  { label: 'Home', href: '/' },
+  { label: 'About Us', href: '/about' },
+  { label: 'Services', href: '/services' },
+  { label: 'Process', href: '/process' },
+  { label: 'Blog', href: '/blog' },
+  { label: 'Contact Us', href: '/contact' },
 ];

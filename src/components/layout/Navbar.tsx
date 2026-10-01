@@ -28,6 +28,10 @@ export default function Navbar() {
     setMobileOpen(false);
   }, [location.pathname]);
 
+  // /blog stays highlighted on /blog/<post>; Home only on the homepage itself.
+  const isActive = (href: string) =>
+    href === '/' ? location.pathname === '/' : location.pathname === href || location.pathname.startsWith(`${href}/`);
+
   const handleAnchor = (href: string) => (e: React.MouseEvent) => {
     if (href.startsWith('/#')) {
       e.preventDefault();
@@ -93,7 +97,16 @@ export default function Navbar() {
                     {item.label}
                   </a>
                 ) : (
-                  <Link to={item.href} className="rounded-full px-4 py-2 text-sm font-semibold text-ink/80 transition-colors hover:text-ink dark:text-slate-300 dark:hover:text-white">
+                  <Link
+                    to={item.href}
+                    aria-current={isActive(item.href) ? 'page' : undefined}
+                    className={cn(
+                      'rounded-full px-4 py-2 text-sm font-semibold transition-colors',
+                      isActive(item.href)
+                        ? 'bg-brand-indigo/10 text-brand-indigo dark:bg-white/10 dark:text-white'
+                        : 'text-ink/80 hover:text-ink dark:text-slate-300 dark:hover:text-white'
+                    )}
+                  >
                     {item.label}
                   </Link>
                 )}
@@ -174,7 +187,11 @@ export default function Navbar() {
                   <a
                     href={item.href}
                     onClick={handleAnchor(item.href)}
-                    className="block border-b border-ink/5 py-4 text-2xl font-bold text-ink dark:border-white/5 dark:text-white"
+                    aria-current={isActive(item.href) ? 'page' : undefined}
+                    className={cn(
+                      'block border-b border-ink/5 py-4 text-2xl font-bold dark:border-white/5',
+                      isActive(item.href) ? 'text-brand-indigo dark:text-brand-iris' : 'text-ink dark:text-white'
+                    )}
                   >
                     {item.label}
                   </a>

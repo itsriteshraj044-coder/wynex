@@ -17,6 +17,9 @@ import Home from './pages/Home';
 const Legal = lazy(() => import('./pages/Legal'));
 const BlogIndex = lazy(() => import('./pages/BlogIndex'));
 const BlogPost = lazy(() => import('./pages/BlogPost'));
+const AboutPage = lazy(() => import('./pages/AboutPage'));
+const ServicesPage = lazy(() => import('./pages/ServicesPage'));
+const ProcessPage = lazy(() => import('./pages/ProcessPage'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
@@ -48,6 +51,9 @@ function AnimatedRoutes() {
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={<Page><Home /></Page>} />
+          <Route path="/about" element={<Page><AboutPage /></Page>} />
+          <Route path="/services" element={<Page><ServicesPage /></Page>} />
+          <Route path="/process" element={<Page><ProcessPage /></Page>} />
           <Route path="/blog" element={<Page><BlogIndex /></Page>} />
           <Route path="/blog/:slug" element={<Page><BlogPost /></Page>} />
           <Route path="/contact" element={<Page><ContactPage /></Page>} />

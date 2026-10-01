@@ -9,26 +9,26 @@ const columns = [
   {
     title: 'Services',
     links: [
-      { label: 'Web Development', href: '/#services' },
-      { label: 'Mobile Apps', href: '/#services' },
-      { label: 'Custom Software', href: '/#services' },
-      { label: 'Cloud & AI', href: '/#services' },
-      { label: 'UI/UX Design', href: '/#services' },
+      { label: 'Web Development', href: '/services' },
+      { label: 'Mobile Apps', href: '/services' },
+      { label: 'Custom Software', href: '/services' },
+      { label: 'Cloud & AI', href: '/services' },
+      { label: 'UI/UX Design', href: '/services' },
     ],
   },
   {
     title: 'Company',
     links: [
-      { label: 'About', href: '/#about' },
+      { label: 'About Us', href: '/about' },
       { label: 'Our Work', href: '/#work' },
-      { label: 'Process', href: '/#process' },
-      { label: 'Contact', href: '/contact' },
+      { label: 'Process', href: '/process' },
+      { label: 'Contact Us', href: '/contact' },
     ],
   },
   {
     title: 'Resources',
     links: [
-      { label: 'Blog', href: '/#blog' },
+      { label: 'Blog', href: '/blog' },
       { label: 'Case Studies', href: '/#work' },
       { label: 'FAQ', href: '/#faq' },
       { label: 'Privacy Policy', href: '/privacy' },

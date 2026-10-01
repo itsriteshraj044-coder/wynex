@@ -12,7 +12,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const SITE_URL = 'https://wynextechnologies.com';
-const STATIC_ROUTES = ['/', '/contact', '/blog', '/privacy', '/terms', '/cookies'];
+const STATIC_ROUTES = ['/', '/about', '/services', '/process', '/contact', '/blog', '/privacy', '/terms', '/cookies'];
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
