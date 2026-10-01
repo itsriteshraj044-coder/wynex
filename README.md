@@ -47,7 +47,7 @@ public/          favicon, manifest, robots.txt, sitemap.xml
 - Frame-by-frame Apple-style scroll storytelling (GSAP ScrollTrigger + pin)
 - Interactive 3D hero (distorted iridescent orb, orbit rings, particle field), lazy-loaded & code-split
 - Custom animated cursor, magnetic buttons, tilt cards, infinite marquees
-- Animated loading screen, scroll-progress bar, back-to-top rocket, AI chatbot widget
+- Animated loading screen, scroll-progress bar, back-to-top rocket, floating WhatsApp chat button
 - Light/Dark mode (default light), PWA manifest, full SEO meta + JSON-LD schema
 - 28 services with category filter, filtered project showcase, testimonial slider,
   animated process timeline, pricing, FAQ accordion, blog, contact form + map placeholder
@@ -97,4 +97,3 @@ npm run preview   # preview the production build locally
 
 - Images use royalty-free Unsplash/pravatar URLs — swap for optimized local assets before launch.
 - The contact form and newsletter are simulated on the client — wire to your backend / form service.
-- The chatbot uses rule-based canned replies — connect to an LLM endpoint for live AI.

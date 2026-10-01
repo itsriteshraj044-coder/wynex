@@ -10,7 +10,7 @@ import AuroraBackground from './components/ui/AuroraBackground';
 import CustomCursor from './components/ui/CustomCursor';
 import ScrollProgress from './components/ui/ScrollProgress';
 import BackToTop from './components/ui/BackToTop';
-import Chatbot from './components/ui/Chatbot';
+import WhatsAppButton from './components/ui/WhatsAppButton';
 import Loader from './components/ui/Loader';
 import Home from './pages/Home';
 
@@ -73,7 +73,7 @@ export default function App() {
       <AnimatedRoutes />
       <Footer />
       <BackToTop />
-      <Chatbot />
+      <WhatsAppButton />
       </ModalProvider>
     </ThemeProvider>
   );
