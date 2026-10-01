@@ -167,7 +167,7 @@ async function generateWithRetry(ai, model, contents, config) {
         // failed run in CI is diagnosable from the log alone.
         const ids = [...new Set(String(e?.message).match(/"quotaId":\s*"[^"]+"/g) || [])].map((q) => q.split('"')[3]);
         const limits = [...new Set(String(e?.message).match(/limit: \d+, model: [\w.-]+/g) || [])];
-        console.warn(`  quota hit on "${model}": ${[...ids, ...limits].join(' · ') || String(e?.message).slice(0, 200)}`);
+        console.warn(`  quota hit on "${model}": ${[...ids, ...limits].join(' · ') || String(e?.message).replace(/s+/g, ' ').slice(0, 900)}`);
       }
       if (!RETRYABLE.has(status)) throw e;
       // A quota of 0 means this key can't use the model at all (e.g. Pro on the
