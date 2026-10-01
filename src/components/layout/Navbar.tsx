@@ -38,6 +38,11 @@ export default function Navbar() {
         scrollToId(href);
       }
       setMobileOpen(false);
+    } else if (href.startsWith('/')) {
+      // Plain page routes (e.g. /contact): client-side navigation, no reload.
+      e.preventDefault();
+      navigate(href);
+      setMobileOpen(false);
     }
   };
 

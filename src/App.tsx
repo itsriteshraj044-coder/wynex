@@ -17,6 +17,7 @@ import Home from './pages/Home';
 const Legal = lazy(() => import('./pages/Legal'));
 const BlogIndex = lazy(() => import('./pages/BlogIndex'));
 const BlogPost = lazy(() => import('./pages/BlogPost'));
+const ContactPage = lazy(() => import('./pages/ContactPage'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 function ScrollToTop() {
@@ -49,6 +50,7 @@ function AnimatedRoutes() {
           <Route path="/" element={<Page><Home /></Page>} />
           <Route path="/blog" element={<Page><BlogIndex /></Page>} />
           <Route path="/blog/:slug" element={<Page><BlogPost /></Page>} />
+          <Route path="/contact" element={<Page><ContactPage /></Page>} />
           <Route path="/privacy" element={<Page><Legal type="privacy" /></Page>} />
           <Route path="/terms" element={<Page><Legal type="terms" /></Page>} />
           <Route path="/cookies" element={<Page><Legal type="cookies" /></Page>} />

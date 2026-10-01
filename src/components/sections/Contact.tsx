@@ -194,7 +194,6 @@ export default function Contact() {
                         <>Send message <ArrowRight className="h-5 w-5 transition-transform duration-200 group-hover:translate-x-1" /></>
                       )}
                     </button>
-                    <p className="text-sm text-ink-muted dark:text-slate-500">We reply within one business day. No spam, ever.</p>
                   </div>
                 </form>
               )}
