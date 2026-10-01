@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 /**
  * Writes one SEO-optimized article per run about a trending AI news story and
- * saves it as JSON in src/content/blog/. Each run: (1) Gemini with Google Search
- * grounding finds this week's biggest AI stories, (2) the newest story we haven't
- * covered is written up from those facts only, (3) a human-editor pass rewrites
- * AI-sounding prose, (4) verified source links are appended. Runs three times a
- * week via CI (see .github/workflows/daily-blog.yml); the commit triggers a deploy.
+ * saves it as JSON in src/content/blog/. Each run: (1) reads this week's AI
+ * headlines from news feeds (OpenAI, Google, DeepMind, TechCrunch, The Verge,
+ * Hugging Face), (2) Gemini shortlists what people are searching for, (3) the
+ * top story we haven't covered is written up using only the fetched article's
+ * facts, (4) a human-editor pass rewrites AI-sounding prose, (5) the source is
+ * linked. Runs three times a week via CI (see .github/workflows/daily-blog.yml);
+ * the commit triggers a deploy.
  *
  * Requires: GEMINI_API_KEY in the environment (from Google AI Studio).
  * Optional: GEMINI_MODEL (defaults to gemini-flash-latest).
@@ -167,7 +169,7 @@ async function generateWithRetry(ai, model, contents, config) {
         // failed run in CI is diagnosable from the log alone.
         const ids = [...new Set(String(e?.message).match(/"quotaId":\s*"[^"]+"/g) || [])].map((q) => q.split('"')[3]);
         const limits = [...new Set(String(e?.message).match(/limit: \d+, model: [\w.-]+/g) || [])];
-        console.warn(`  quota hit on "${model}": ${[...ids, ...limits].join(' · ') || String(e?.message).replace(/s+/g, ' ').slice(0, 900)}`);
+        console.warn(`  quota hit on "${model}": ${[...ids, ...limits].join(' · ') || String(e?.message).replace(/\s+/g, ' ').slice(0, 900)}`);
       }
       if (!RETRYABLE.has(status)) throw e;
       // A quota of 0 means this key can't use the model at all (e.g. Pro on the
@@ -245,104 +247,161 @@ async function humanize(draft, run) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Trending AI news: research with Google Search, then write          */
+/*  Trending AI news: read news feeds, pick a story, read the article  */
 /* ------------------------------------------------------------------ */
 
-// Google Search grounding can't be combined with a JSON response schema, so the
-// research call returns text and we pull the JSON array out of it.
-const RESEARCH_CONFIG = { temperature: 0.3, maxOutputTokens: 8192, tools: [{ googleSearch: {} }] };
-const MAX_STORY_AGE_DAYS = 10;
+// Official AI blogs plus newsrooms that cover the rest (Anthropic, Meta, xAI…).
+// Reading feeds directly is free and gives real article links; Gemini's own
+// Google Search grounding isn't available on the free API tier.
+const NEWS_FEEDS = [
+  'https://openai.com/news/rss.xml',
+  'https://blog.google/technology/ai/rss/',
+  'https://deepmind.google/blog/rss.xml',
+  'https://techcrunch.com/category/artificial-intelligence/feed/',
+  'https://www.theverge.com/rss/ai-artificial-intelligence/index.xml',
+  'https://huggingface.co/blog/feed.xml',
+];
+const MAX_STORY_AGE_DAYS = 7;
+const BOT_UA = 'Mozilla/5.0 (compatible; WynexBlogBot/1.0; +https://wynextechnologies.com)';
 
-const researchPrompt = (today) => `Today is ${today}. Use Google Search to find the 6 biggest AI news stories from the last 7 days that people are actively searching for.
+const decodeEntities = (s) =>
+  s
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#0?39;|&#8217;|&rsquo;|&#x27;/g, "'")
+    .replace(/&#8216;|&lsquo;/g, "'")
+    .replace(/&#8220;|&#8221;|&ldquo;|&rdquo;/g, '"')
+    .replace(/&#8211;|&ndash;/g, '–')
+    .replace(/&#8212;|&mdash;/g, '—')
+    .replace(/&nbsp;|&#160;/g, ' ');
 
-Prioritise: new model releases and major updates (OpenAI / ChatGPT, Google Gemini, Anthropic Claude, Meta Llama, xAI Grok, Microsoft Copilot, Mistral, DeepSeek, Apple Intelligence and similar), big new AI features or products, pricing or availability changes, and AI news that matters to businesses and developers in India. Skip rumours, opinion pieces and funding-only news.
+const stripTags = (html) =>
+  decodeEntities(
+    html
+      .replace(/<(script|style|noscript|svg|nav|footer|header|form|aside)[\s\S]*?<\/\1>/gi, ' ')
+      .replace(/<[^>]+>/g, ' '),
+  )
+    .replace(/\s+/g, ' ')
+    .trim();
 
-Order them from most to least important. For each story give only facts you found in your search results.
-
-Reply with ONLY a JSON array, no other text:
-[
-  {
-    "headline": "short factual headline naming the company and product",
-    "date": "YYYY-MM-DD (the date it was announced)",
-    "facts": ["5-8 specific facts: what it is, key capabilities, benchmarks or numbers, who can use it, pricing/availability, how it compares"],
-    "sources": ["2-4 URLs of official announcements or reputable news coverage"]
-  }
-]`;
-
-function parseStories(text, today) {
-  const start = text.indexOf('[');
-  const end = text.lastIndexOf(']');
-  if (start < 0 || end <= start) return [];
-  let items;
-  try {
-    items = JSON.parse(text.slice(start, end + 1));
-  } catch {
-    return [];
-  }
-  const cutoff = new Date(Date.parse(today) - MAX_STORY_AGE_DAYS * 864e5).toISOString().slice(0, 10);
-  return (Array.isArray(items) ? items : [])
-    .filter((s) => s && typeof s.headline === 'string' && Array.isArray(s.facts) && s.facts.length)
-    .map((s) => ({
-      headline: s.headline.trim(),
-      date: /^\d{4}-\d{2}-\d{2}$/.test(s.date) ? s.date : '',
-      facts: s.facts.map(String).slice(0, 10),
-      sources: (Array.isArray(s.sources) ? s.sources : []).map(String).filter((u) => /^https?:\/\//.test(u)),
-    }))
-    // Drop stale or undated stories so a "latest news" post is really this week's.
-    .filter((s) => s.date && s.date >= cutoff && s.date <= today);
+function feedTag(block, name) {
+  const m = block.match(new RegExp(`<${name}(?:\\s[^>]*)?>([\\s\\S]*?)</${name}>`, 'i'));
+  // Unwrap CDATA first, or the tag stripper would remove it along with the text.
+  return m ? stripTags(m[1].replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')) : '';
 }
 
-const articlePrompt = (story, posts, linkable, today) => `You are a senior technical writer at Wynex Technologies, a software development agency in Patna, India. Write ONE SEO-optimized blog article about this week's AI news story below. Today is ${today}.
+function parseFeed(xml, feedUrl) {
+  const source = new URL(feedUrl).hostname.replace(/^www\./, '');
+  const blocks = xml.match(/<item[\s>][\s\S]*?<\/item>|<entry[\s>][\s\S]*?<\/entry>/gi) || [];
+  return blocks.map((b) => {
+    const atomLink = (b.match(/<link[^>]*rel="alternate"[^>]*href="([^"]+)"/i) || b.match(/<link[^>]*href="([^"]+)"/i) || [])[1];
+    const link = (feedTag(b, 'link') || atomLink || '').trim();
+    const when = feedTag(b, 'pubDate') || feedTag(b, 'published') || feedTag(b, 'updated') || feedTag(b, 'dc:date');
+    const time = Date.parse(when);
+    return {
+      title: feedTag(b, 'title'),
+      link,
+      date: Number.isNaN(time) ? '' : new Date(time).toISOString().slice(0, 10),
+      summary: (feedTag(b, 'description') || feedTag(b, 'summary')).slice(0, 300),
+      source,
+    };
+  });
+}
 
-NEWS STORY (use ONLY these facts — do not invent numbers, dates, features, prices or quotes; if a detail isn't here, leave it out):
-Headline: ${story.headline}
-Announced: ${story.date}
-Facts:
-${story.facts.map((f) => `- ${f}`).join('\n')}
+async function fetchText(url, ms = 15000) {
+  const res = await fetch(url, { headers: { 'user-agent': BOT_UA }, redirect: 'follow', signal: AbortSignal.timeout(ms) });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.text();
+}
 
-Write it for business owners, product teams and developers who just heard the news and are searching for it. Structure:
-- A 2-3 sentence hook that says what was announced and why it matters.
+/** Recent AI headlines from all feeds, newest first, de-duplicated by title. */
+async function collectNews(today) {
+  const cutoff = new Date(Date.parse(today) - MAX_STORY_AGE_DAYS * 864e5).toISOString().slice(0, 10);
+  const results = await Promise.allSettled(NEWS_FEEDS.map(async (f) => parseFeed(await fetchText(f), f)));
+  const items = [];
+  results.forEach((r, i) => {
+    if (r.status === 'fulfilled') items.push(...r.value);
+    else console.warn(`  feed skipped (${r.reason?.message || r.reason}): ${NEWS_FEEDS[i]}`);
+  });
+  const seen = new Set();
+  return items
+    .filter((it) => it.title && /^https?:\/\//.test(it.link) && it.date && it.date >= cutoff && it.date <= today)
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .filter((it) => {
+      const key = it.title.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, 60);
+}
+
+const pickSchema = {
+  type: Type.OBJECT,
+  properties: { picks: { type: Type.ARRAY, items: { type: Type.INTEGER }, description: 'Indexes of the chosen headlines, best first.' } },
+  required: ['picks'],
+};
+const PICK_CONFIG = { temperature: 0.2, maxOutputTokens: 1024, responseMimeType: 'application/json', responseSchema: pickSchema };
+
+const pickPrompt = (news, posts) => `You run the blog of Wynex Technologies, a software agency. From this week's AI headlines below, choose up to 5 that the most people will be searching for right now, best first.
+
+Prefer: new AI model launches and major upgrades (OpenAI/ChatGPT, Google Gemini, Anthropic Claude, Meta Llama, xAI Grok, Microsoft Copilot, Mistral, DeepSeek, Apple and similar), big new AI features or products, and pricing/availability changes that affect businesses or developers.
+Avoid: funding rounds, lawsuits, opinion pieces, research papers with no product, minor tutorials, and anything already covered by these published articles:
+${posts.length ? posts.map((p) => `- ${p.title}`).join('\n') : '- (none yet)'}
+
+Headlines:
+${news.map((n, i) => `${i}. [${n.date}] (${n.source}) ${n.title}${n.summary ? ` — ${n.summary.slice(0, 160)}` : ''}`).join('\n')}
+
+Return JSON: {"picks": [indexes]}.`;
+
+/** The article's readable text, or null if it can't be fetched or is too thin. */
+async function readArticle(url) {
+  try {
+    const html = await fetchText(url);
+    const main = (html.match(/<article[\s\S]*?<\/article>/i) || html.match(/<main[\s\S]*?<\/main>/i) || [html])[0];
+    let text = stripTags(main);
+    // Some sites keep little inside <article>; fall back to the whole page.
+    if (text.length < 1000) text = stripTags(html);
+    return text.length >= 1000 ? text.slice(0, 14000) : null;
+  } catch (e) {
+    console.warn(`  couldn't read ${url} (${e.message})`);
+    return null;
+  }
+}
+
+const articlePrompt = (story, sourceText, posts, linkable, today) => `You are a senior technical writer at Wynex Technologies, a software development agency in Patna, India. Write ONE SEO-optimized blog article about this week's AI news. Today is ${today}.
+
+NEWS: ${story.title}
+Published ${story.date} by ${story.source}: ${story.link}
+
+SOURCE ARTICLE TEXT (your only source of facts — do not invent numbers, dates, features, prices, benchmarks or quotes; if a detail isn't here, leave it out):
+"""
+${sourceText}
+"""
+
+Write for business owners, product teams and developers who just heard the news and are searching for it. Structure:
+- A 2-3 sentence hook: what was announced and why it matters.
 - ## What was announced — the key facts, clearly.
-- ## What's new / how it compares — what changed versus earlier versions or competitors (only where the facts support it).
+- ## What's new — what changed or how it compares (only where the source supports it).
 - ## What it means for businesses and developers — practical impact, including for teams in India.
 - ## How to try it or prepare — concrete next steps.
 - ## The takeaway
-Mix short paragraphs with bullet lists. Do NOT add a "Sources" section — it is added automatically.
+Mix short paragraphs with bullet lists. Attribute the news to ${story.source} once in the intro. Do NOT add a "Sources" section — it is added automatically.
 
-Title: specific and searchable — name the company and product/model (e.g. "Google Gemini 3.5 Is Here: What's New and What It Means for Your Business"). No clickbait, no "Optimizing"/"Mastering" openers.
+Title: specific and searchable — name the company and product/model (e.g. "Google's Gemini 3.5 Is Here: What's New and What It Means for Your Business"). No clickbait; don't start with "Optimizing" or "Mastering".
 
 Already published (don't repeat these topics):
 ${posts.length ? posts.map((p) => `- ${p.title}`).join('\n') : '- (none yet)'}
 
-Internal links: only if genuinely relevant, link 1-2 of these articles inline using the exact path shown; otherwise skip:
+Internal links: only if genuinely relevant, link 1-2 of these inline with the exact path; otherwise skip:
 ${linkable.length ? linkable.map((p) => `- [${p.title}](/blog/${p.slug})`).join('\n') : '- (none)'}
 
 Requirements: 800-1200 words of Markdown in "content" (no H1); a 140-160 character meta description with the main keyword; 5-8 keywords; category "AI".
 
 Return only the structured JSON object.`;
-
-/** Keep source links that actually resolve; hallucinated URLs usually 404. */
-async function verifiedSources(urls) {
-  const out = [];
-  for (const url of [...new Set(urls)]) {
-    if (/vertexaisearch\.cloud\.google\.com/.test(url)) continue; // internal grounding redirects
-    try {
-      const res = await fetch(url, {
-        method: 'GET',
-        redirect: 'follow',
-        signal: AbortSignal.timeout(10000),
-        headers: { 'user-agent': 'Mozilla/5.0 (compatible; WynexBlogBot/1.0; +https://wynextechnologies.com)' },
-      });
-      // Some publishers block bots with 401/403/429; that still proves the page exists.
-      if (res.status !== 404 && res.status !== 410 && res.status < 500) out.push(url);
-      else console.warn(`  source dropped (${res.status}): ${url}`);
-    } catch {
-      console.warn(`  source dropped (unreachable): ${url}`);
-    }
-    if (out.length >= 4) break;
-  }
-  return out;
-}
 
 const sourceLabel = (url) => {
   try {
@@ -393,28 +452,47 @@ async function main() {
     throw lastErr;
   }
 
-  // 1. Research: this week's AI news via Google Search grounding.
-  const { response: researchRes } = await generate(researchPrompt(today), RESEARCH_CONFIG);
-  const stories = parseStories(researchRes.text || '', today);
-  console.log(`Research: ${stories.length} fresh AI stories found`);
-  for (const s of stories) console.log(`  - [${s.date}] ${s.headline}`);
-  if (!stories.length) {
-    console.error('\nNo article published: the news search returned no AI stories from the last 10 days.');
+  // 1. This week's AI headlines, straight from the news feeds.
+  const news = await collectNews(today);
+  console.log(`News: ${news.length} AI headlines from the last ${MAX_STORY_AGE_DAYS} days`);
+  if (!news.length) {
+    console.error('\nNo article published: no recent AI headlines could be read from the news feeds.');
     process.exit(1);
   }
 
-  // 2. Write about the most important story we haven't covered yet.
+  // 2. Let Gemini shortlist the stories people are most likely searching for.
+  const { response: pickRes } = await generate(pickPrompt(news, posts), PICK_CONFIG);
+  let picks = [];
+  try {
+    picks = JSON.parse(pickRes.text || '{}').picks || [];
+  } catch {
+    /* handled below */
+  }
+  const shortlist = [...new Set(picks)].filter((i) => Number.isInteger(i) && news[i]).map((i) => news[i]);
+  console.log('Shortlist:');
+  for (const s of shortlist) console.log(`  - [${s.date}] (${s.source}) ${s.title}`);
+  if (!shortlist.length) {
+    console.error('\nNo article published: Gemini did not shortlist any headline.');
+    process.exit(1);
+  }
+
+  // 3. Write up the first shortlisted story that's new to us and readable.
   const MAX_ATTEMPTS = 3;
   let post, usedModel, story;
   let attempts = 0;
-  for (const s of stories) {
-    const already = findDuplicate({ title: s.headline, slug: slugify(s.headline) }, posts);
+  for (const s of shortlist) {
+    const already = findDuplicate({ title: s.title, slug: slugify(s.title) }, posts);
     if (already) {
-      console.warn(`Skipping "${s.headline}" — already covered by "${already.post.title}" (${already.reason}).`);
+      console.warn(`Skipping "${s.title}" — already covered by "${already.post.title}" (${already.reason}).`);
+      continue;
+    }
+    const sourceText = await readArticle(s.link);
+    if (!sourceText) {
+      console.warn(`Skipping "${s.title}" — couldn't read the article.`);
       continue;
     }
     if (++attempts > MAX_ATTEMPTS) break;
-    const { response, model } = await generate(articlePrompt(s, posts, linkable, today));
+    const { response, model } = await generate(articlePrompt(s, sourceText, posts, linkable, today));
     const raw = response.text;
     if (!raw) {
       console.error('No text returned. Finish reason:', response.candidates?.[0]?.finishReason);
@@ -433,7 +511,7 @@ async function main() {
     break;
   }
   if (!post) {
-    console.error('\nNo article published: every fresh story was already covered or failed to generate.');
+    console.error('\nNo article published: every shortlisted story was already covered, unreadable or failed to generate.');
     process.exit(1);
   }
 
@@ -465,14 +543,9 @@ async function main() {
     },
   );
 
-  // Cite the news sources (only links that actually resolve).
-  const sources = await verifiedSources(story.sources);
-  if (sources.length) {
-    const list = sources.map((u) => `- [${sourceLabel(u)}](${u})`).join('\n');
-    post.content += `\n\n## Sources\n\n${list}`;
-  } else {
-    console.warn('  ⚠ no source links could be verified');
-  }
+  // Cite the article the facts came from.
+  const label = `${story.source} — ${story.title}`.replace(/[[\]]/g, '');
+  post.content += `\n\n## Source\n\n- [${label}](${story.link})`;
 
   // Structural quality gate: a good article needs H2 sections, at least one
   // list, and (when there are posts to link) real internal links. We warn
@@ -496,7 +569,7 @@ async function main() {
   if (process.env.DRY_RUN) {
     console.log(`
 [dry run] Not saved. Model: ${usedModel}
-Story: ${story.headline} (${story.date})
+Story: ${story.title} (${story.date}, ${story.source})
 Title: ${post.title}
 Slug: ${post.slug}
 Meta: ${post.metaDescription}
