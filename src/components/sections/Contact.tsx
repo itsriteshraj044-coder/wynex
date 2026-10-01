@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Mail, MapPin, Phone, ArrowRight, CheckCircle2, Loader2, AlertCircle, ChevronDown } from 'lucide-react';
 import SectionHeading from '../ui/SectionHeading';
 import { SITE } from '../../constants/site';
@@ -15,9 +15,6 @@ export default function Contact() {
   const [sendError, setSendError] = useState('');
   const [honeypot, setHoneypot] = useState('');
   const startedAt = useRef(Date.now());
-  const reduceMotion = useReducedMotion();
-
-  const errorList = Object.values(errors).filter(Boolean);
 
   const validate = () => {
     const e: Record<string, string> = {};
@@ -26,7 +23,6 @@ export default function Contact() {
     if (!/^[+\d][\d\s-]{7,}$/.test(form.phone.trim())) e.phone = 'Enter a valid phone number';
     if (!form.city.trim()) e.city = 'Please enter your city';
     if (!form.state.trim()) e.state = 'Please enter your state';
-    if (form.message.trim().length < 10) e.message = 'Tell us a little more (10+ chars)';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -131,11 +127,6 @@ export default function Contact() {
                   </p>
                 </motion.div>
               ) : (
-                /*
-                 * Conversational form: the fields are inline blanks inside a
-                 * sentence. Each one still carries a real (screen-reader only)
-                 * label, so the prose is decoration — not the accessible name.
-                 */
                 <form onSubmit={submit} noValidate className="relative">
                   {/* Honeypot: hidden from people, filled in by bots. */}
                   <input
@@ -148,57 +139,36 @@ export default function Contact() {
                     onChange={(e) => setHoneypot(e.target.value)}
                     className="absolute -left-[9999px] h-px w-px opacity-0"
                   />
-                  <p className="text-xl font-medium leading-[2.4] text-ink dark:text-slate-200 sm:text-2xl sm:leading-[2.5]">
-                    Hi Wynex, I'm{' '}
-                    <Blank id="name" label="Your name" placeholder="your name" autoComplete="name" error={errors.name} {...field('name')} />
-                    {' '}from{' '}
-                    <Blank id="city" label="Your city" placeholder="city" autoComplete="address-level2" error={errors.city} {...field('city')} />
-                    ,{' '}
-                    <Blank id="state" label="Your state" placeholder="state" autoComplete="address-level1" error={errors.state} {...field('state')} />
-                    .
-                  </p>
 
-                  <p className="mt-6 text-xl font-medium leading-[2.4] text-ink dark:text-slate-200 sm:text-2xl sm:leading-[2.5]">
-                    I need help with{' '}
-                    <BlankSelect id="service" label="Service you need" value={form.service} onChange={field('service').onChange}>
-                      {SERVICES.map((s) => <option key={s.slug} value={s.title}>{s.title}</option>)}
-                    </BlankSelect>
-                    . You can reach me at{' '}
-                    <Blank id="email" label="Your email address" type="email" placeholder="your@email.com" autoComplete="email" error={errors.email} {...field('email')} />
-                    {' '}or{' '}
-                    <Blank id="phone" label="Your phone number" type="tel" placeholder="phone number" autoComplete="tel" error={errors.phone} {...field('phone')} />
-                    .
-                  </p>
+                  <h3 className="text-2xl font-bold text-ink dark:text-white sm:text-3xl">Tell us about your project</h3>
+                  <p className="mt-2 text-ink-muted dark:text-slate-400">Fill in a few details and we'll get back to you within one business day.</p>
 
-                  <div className="mt-8">
-                    <label htmlFor="message" className="text-xl font-medium text-ink dark:text-slate-200 sm:text-2xl">
-                      Here's what I have in mind:
-                    </label>
-                    <textarea
-                      id="message"
-                      {...field('message')}
-                      rows={4}
-                      aria-invalid={errors.message ? true : undefined}
-                      className={`blank-area mt-3 ${errors.message ? 'blank--error' : ''}`}
-                      placeholder="A short description of the project, timeline and budget…"
-                    />
+                  <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                    <div className="sm:col-span-2">
+                      <FloatingInput id="name" label="Full name" autoComplete="name" error={errors.name} {...field('name')} />
+                    </div>
+                    <FloatingInput id="email" label="Email address" type="email" autoComplete="email" error={errors.email} {...field('email')} />
+                    <FloatingInput id="phone" label="Phone number" type="tel" autoComplete="tel" error={errors.phone} {...field('phone')} />
+                    <FloatingInput id="city" label="City" autoComplete="address-level2" error={errors.city} {...field('city')} />
+                    <FloatingInput id="state" label="State" autoComplete="address-level1" error={errors.state} {...field('state')} />
+                    <div className="sm:col-span-2">
+                      <FloatingSelect id="service" label="Service you need" {...field('service')}>
+                        {SERVICES.map((s) => <option key={s.slug} value={s.title}>{s.title}</option>)}
+                      </FloatingSelect>
+                    </div>
+                    <div className="relative sm:col-span-2">
+                      <textarea
+                        id="message"
+                        rows={4}
+                        placeholder=" "
+                        {...field('message')}
+                        className={`${fieldBox} peer resize-none`}
+                      />
+                      <label htmlFor="message" className={`${floatLabel} top-5 peer-focus:top-3.5 peer-[:not(:placeholder-shown)]:top-3.5`}>
+                        Project details <span className="font-normal opacity-70">(optional)</span>
+                      </label>
+                    </div>
                   </div>
-
-                  {errorList.length > 0 && (
-                    <motion.div
-                      initial={reduceMotion ? false : { opacity: 0, y: -6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      role="alert"
-                      className="mt-6 rounded-2xl border border-rose-500/25 bg-rose-500/[0.07] p-4"
-                    >
-                      <p className="flex items-center gap-2 text-sm font-semibold text-rose-600 dark:text-rose-400">
-                        <AlertCircle className="h-4 w-4 shrink-0" /> A few blanks still need attention
-                      </p>
-                      <ul className="mt-2 space-y-1 pl-6 text-sm text-rose-600/90 dark:text-rose-400/90">
-                        {errorList.map((msg) => <li key={msg} className="list-disc">{msg}</li>)}
-                      </ul>
-                    </motion.div>
-                  )}
 
                   {sendError && (
                     <div role="alert" className="mt-6 rounded-2xl border border-rose-500/25 bg-rose-500/[0.07] p-4 text-sm text-rose-600 dark:text-rose-400">
@@ -212,21 +182,18 @@ export default function Contact() {
                     </div>
                   )}
 
-                  <div className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-3">
-                    <motion.button
+                  <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
+                    <button
                       type="submit"
                       disabled={status === 'sending'}
-                      whileHover={reduceMotion ? undefined : { x: 3 }}
-                      whileTap={reduceMotion ? undefined : { scale: 0.98 }}
-                      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                       className="group inline-flex cursor-pointer items-center gap-3 rounded-full bg-ink px-7 py-4 text-base font-semibold text-white transition-colors duration-200 hover:bg-brand-indigo focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-indigo focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-white dark:text-ink dark:hover:bg-brand-indigo dark:hover:text-white dark:focus-visible:ring-offset-ink"
                     >
                       {status === 'sending' ? (
                         <><Loader2 className="h-5 w-5 animate-spin" /> Sending…</>
                       ) : (
-                        <>Let's talk <ArrowRight className="h-5 w-5 transition-transform duration-200 group-hover:translate-x-1" /></>
+                        <>Send message <ArrowRight className="h-5 w-5 transition-transform duration-200 group-hover:translate-x-1" /></>
                       )}
-                    </motion.button>
+                    </button>
                     <p className="text-sm text-ink-muted dark:text-slate-500">We reply within one business day. No spam, ever.</p>
                   </div>
                 </form>
@@ -235,129 +202,71 @@ export default function Contact() {
           </div>
         </div>
       </div>
-
-      <style>{`
-        /* Inline blanks — underlined words inside the sentence, not boxes */
-        .blank {
-          max-width: 100%;
-          background: transparent;
-          border: 0;
-          border-bottom: 2px dashed rgba(79,70,229,0.4);
-          padding: 0 0.35rem 0.15rem;
-          font: inherit;
-          font-weight: 600;
-          color: #4F46E5;
-          outline: none;
-          transition: border-color .2s ease, color .2s ease, background-size .25s ease;
-          background-image: linear-gradient(90deg, #4F46E5, #8B5CF6, #38BDF8);
-          background-repeat: no-repeat;
-          background-position: 0 100%;
-          background-size: 0% 2px;
-        }
-        .blank::placeholder { color: rgba(71,85,105,0.5); font-weight: 500; }
-        .blank:hover { border-bottom-color: rgba(79,70,229,0.7); }
-        .blank:not(:placeholder-shown) { border-bottom-style: solid; }
-        /* Focus paints a gradient underline that grows out from the left */
-        .blank:focus {
-          border-bottom-color: transparent;
-          background-size: 100% 2px;
-        }
-        .blank--error {
-          border-bottom-color: #F43F5E;
-          border-bottom-style: solid;
-          color: #F43F5E;
-        }
-        .blank--error::placeholder { color: rgba(244,63,94,0.6); }
-
-        .blank--select {
-          appearance: none;
-          -webkit-appearance: none;
-          padding-right: 1.5rem;
-          cursor: pointer;
-          border-bottom-style: solid;
-        }
-        .blank--select option { color: #0B1020; font-size: 1rem; font-weight: 500; }
-
-        /* Project description: same language, full width */
-        .blank-area {
-          display: block;
-          width: 100%;
-          resize: none;
-          background: transparent;
-          border: 0;
-          border-bottom: 2px dashed rgba(79,70,229,0.4);
-          padding: 0 0.35rem 0.6rem;
-          font: inherit;
-          font-size: 1.0625rem;
-          line-height: 1.9;
-          font-weight: 500;
-          color: #0B1020;
-          outline: none;
-          transition: border-color .2s ease, background-size .25s ease;
-          background-image: linear-gradient(90deg, #4F46E5, #8B5CF6, #38BDF8);
-          background-repeat: no-repeat;
-          background-position: 0 100%;
-          background-size: 0% 2px;
-        }
-        .blank-area::placeholder { color: rgba(71,85,105,0.5); font-weight: 400; }
-        .blank-area:hover { border-bottom-color: rgba(79,70,229,0.7); }
-        .blank-area:not(:placeholder-shown) { border-bottom-style: solid; }
-        .blank-area:focus { border-bottom-color: transparent; background-size: 100% 2px; }
-
-        .dark .blank { color: #A5B4FC; border-bottom-color: rgba(165,180,252,0.4); }
-        .dark .blank::placeholder { color: rgba(148,163,184,0.55); }
-        .dark .blank:hover { border-bottom-color: rgba(165,180,252,0.75); }
-        .dark .blank--error { color: #FB7185; border-bottom-color: #FB7185; }
-        .dark .blank--select option { color: #0B1020; }
-        .dark .blank-area { color: #E2E8F0; border-bottom-color: rgba(165,180,252,0.4); }
-        .dark .blank-area::placeholder { color: rgba(148,163,184,0.55); }
-        .dark .blank-area:hover { border-bottom-color: rgba(165,180,252,0.75); }
-
-        @media (prefers-reduced-motion: reduce) {
-          .blank, .blank-area { transition-duration: .01ms; }
-        }
-      `}</style>
     </section>
   );
 }
 
-type BlankProps = {
+/*
+ * Floating-label fields: the label sits inside the box like a placeholder and
+ * slides up once the field is focused or filled. Inputs use placeholder=" " so
+ * :placeholder-shown tells us whether they're empty.
+ */
+const fieldBox =
+  'w-full rounded-2xl border border-ink/10 bg-white/80 px-4 pb-2.5 pt-6 text-[15px] text-ink outline-none transition ' +
+  'hover:border-ink/20 focus:border-brand-indigo focus:ring-4 focus:ring-brand-indigo/10 ' +
+  'dark:border-white/10 dark:bg-white/[0.04] dark:text-white dark:hover:border-white/20 dark:focus:border-brand-iris';
+
+const floatLabel =
+  'pointer-events-none absolute left-4 -translate-y-1/2 text-[15px] text-ink-muted transition-all duration-200 ' +
+  'peer-focus:text-xs peer-focus:font-semibold peer-focus:text-brand-indigo ' +
+  'peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:font-semibold ' +
+  'motion-reduce:transition-none dark:text-slate-400 dark:peer-focus:text-brand-iris';
+
+const errorBox = '!border-rose-500 focus:!ring-rose-500/15';
+
+type FloatingInputProps = {
   id: string;
   label: string;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  placeholder: string;
   type?: string;
   error?: string;
   autoComplete?: string;
 };
 
-/** Widen the blank to fit its content so the sentence stays tight around it. */
-const blankWidth = (value: string, placeholder: string) =>
-  `${Math.min(Math.max((value || placeholder).length + 1, 8), 24)}ch`;
-
-/** An inline "fill in the blank" input that sits inside the sentence. */
-function Blank({ id, label, value, onChange, placeholder, type = 'text', error, autoComplete }: BlankProps) {
+function FloatingInput({ id, label, value, onChange, type = 'text', error, autoComplete }: FloatingInputProps) {
   return (
-    <span className="inline-block">
-      <label htmlFor={id} className="sr-only">{label}</label>
-      <input
-        id={id}
-        type={type}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        autoComplete={autoComplete}
-        aria-invalid={error ? true : undefined}
-        style={{ width: blankWidth(value, placeholder) }}
-        className={`blank ${error ? 'blank--error' : ''}`}
-      />
-    </span>
+    <div>
+      <div className="relative">
+        <input
+          id={id}
+          type={type}
+          value={value}
+          onChange={onChange}
+          placeholder=" "
+          autoComplete={autoComplete}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? `${id}-error` : undefined}
+          className={`${fieldBox} peer ${error ? errorBox : ''}`}
+        />
+        <label
+          htmlFor={id}
+          className={`${floatLabel} top-1/2 peer-focus:top-3.5 peer-[:not(:placeholder-shown)]:top-3.5 ${error ? '!text-rose-500' : ''}`}
+        >
+          {label}
+        </label>
+      </div>
+      {error && (
+        <p id={`${id}-error`} className="mt-1.5 flex items-center gap-1.5 pl-1 text-xs font-medium text-rose-600 dark:text-rose-400">
+          <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {error}
+        </p>
+      )}
+    </div>
   );
 }
 
-/** Same inline treatment for the service dropdown. */
-function BlankSelect({ id, label, value, onChange, children }: {
+/** A select always has a value, so its label stays in the raised position. */
+function FloatingSelect({ id, label, value, onChange, children }: {
   id: string;
   label: string;
   value: string;
@@ -365,12 +274,12 @@ function BlankSelect({ id, label, value, onChange, children }: {
   children: React.ReactNode;
 }) {
   return (
-    <span className="relative inline-block">
-      <label htmlFor={id} className="sr-only">{label}</label>
-      <select id={id} value={value} onChange={onChange} className="blank blank--select">
+    <div className="relative">
+      <select id={id} value={value} onChange={onChange} className={`${fieldBox} peer cursor-pointer appearance-none pr-10 [&>option]:bg-white [&>option]:text-ink`}>
         {children}
       </select>
-      <ChevronDown aria-hidden className="pointer-events-none absolute right-1 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-indigo dark:text-brand-iris" />
-    </span>
+      <label htmlFor={id} className={`${floatLabel} top-3.5 text-xs font-semibold`}>{label}</label>
+      <ChevronDown aria-hidden className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted dark:text-slate-400" />
+    </div>
   );
 }

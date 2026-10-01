@@ -158,10 +158,8 @@ export default function ContactModal({ isOpen, onClose }: { isOpen: boolean; onC
                     <div>
                       <label className="sr-only">Message</label>
                       <textarea
-                        required
-                        minLength={10}
                         rows={3}
-                        placeholder="How can we help?"
+                        placeholder="How can we help? (optional)"
                         value={form.message}
                         onChange={(e) => setForm({ ...form, message: e.target.value })}
                         className="w-full resize-none rounded-xl border border-ink/10 bg-surface px-4 py-3 text-sm text-ink outline-none transition-colors focus:border-brand-indigo dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-brand-indigo"

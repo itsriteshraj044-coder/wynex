@@ -112,8 +112,8 @@ if ($type === 'contact') {
     $message = isset($data['message']) && is_string($data['message']) ? trim($data['message']) : '';
     $message = mb_substr(preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]+/u', '', $message) ?? '', 0, 5000);
 
-    if ($name === '' || $message === '' || mb_strlen($message) < 10) {
-        respond(422, ['ok' => false, 'error' => 'Please fill in your name and a short message.']);
+    if ($name === '') {
+        respond(422, ['ok' => false, 'error' => 'Please enter your name.']);
     }
     if (preg_match_all('#https?://#i', $message) > 3) {
         quietly_drop('too many links');
@@ -152,7 +152,7 @@ foreach ($rows as $label => $value) {
     $html .= '<tr><td style="color:#555"><strong>' . $h($label) . '</strong></td><td>' . $h($value) . '</td></tr>';
 }
 $html .= '</table>';
-if ($type === 'contact') {
+if ($type === 'contact' && $message !== '') {
     $text .= "\nMessage:\n$message\n";
     $html .= '<p><strong>Message</strong></p><p>' . nl2br($h($message)) . '</p>';
 }
