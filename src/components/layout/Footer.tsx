@@ -32,7 +32,7 @@ const columns = [
       { label: 'Case Studies', href: '/work' },
       { label: 'FAQ', href: '/#faq' },
       { label: 'Privacy Policy', href: '/privacy' },
-      { label: 'Terms of Service', href: '/terms' },
+      { label: 'Terms & Conditions', href: '/terms' },
     ],
   },
 ];

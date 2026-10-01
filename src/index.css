@@ -110,13 +110,18 @@
     text-rendering: optimizeLegibility;
   }
 
+  /* clip (not hidden) stops sideways scrolling without turning html/body into
+     scroll containers, which would break position: sticky across the site.
+     hidden stays as the fallback for browsers without clip. */
   html {
     overflow-x: hidden;
+    overflow-x: clip;
   }
 
   body {
     @apply bg-surface text-ink font-body antialiased;
     overflow-x: hidden;
+    overflow-x: clip;
   }
 
   ::selection {
