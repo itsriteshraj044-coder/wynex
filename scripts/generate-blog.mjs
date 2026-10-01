@@ -344,7 +344,9 @@ const pickSchema = {
   properties: { picks: { type: Type.ARRAY, items: { type: Type.INTEGER }, description: 'Indexes of the chosen headlines, best first.' } },
   required: ['picks'],
 };
-const PICK_CONFIG = { temperature: 0.2, maxOutputTokens: 1024, responseMimeType: 'application/json', responseSchema: pickSchema };
+// Thinking models count their reasoning against maxOutputTokens, so leave room
+// even though the answer itself is tiny.
+const PICK_CONFIG = { temperature: 0.2, maxOutputTokens: 8192, responseMimeType: 'application/json', responseSchema: pickSchema };
 
 const pickPrompt = (news, posts) => `You run the blog of Wynex Technologies, a software agency. From this week's AI headlines below, choose up to 5 that the most people will be searching for right now, best first.
 
@@ -463,16 +465,18 @@ async function main() {
   // 2. Let Gemini shortlist the stories people are most likely searching for.
   const { response: pickRes } = await generate(pickPrompt(news, posts), PICK_CONFIG);
   let picks = [];
+  const pickText = (pickRes.text || '').replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim();
   try {
-    picks = JSON.parse(pickRes.text || '{}').picks || [];
+    picks = JSON.parse(pickText || '{}').picks || [];
   } catch {
     /* handled below */
   }
-  const shortlist = [...new Set(picks)].filter((i) => Number.isInteger(i) && news[i]).map((i) => news[i]);
+  const shortlist = [...new Set(picks.map(Number))].filter((i) => Number.isInteger(i) && news[i]).map((i) => news[i]);
   console.log('Shortlist:');
   for (const s of shortlist) console.log(`  - [${s.date}] (${s.source}) ${s.title}`);
   if (!shortlist.length) {
     console.error('\nNo article published: Gemini did not shortlist any headline.');
+    console.error(`  finish reason: ${pickRes.candidates?.[0]?.finishReason ?? 'unknown'} · reply: ${pickText.slice(0, 300) || '(empty)'}`);
     process.exit(1);
   }
 
