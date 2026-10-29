@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom';
 import { ChevronRight, Mail } from 'lucide-react';
 import Seo from '../components/ui/Seo';
 import { PAGE_SEO, SITE_URL } from '../constants/seo';
-import { LEGAL } from '../constants/legal';
-import type { LegalBlock } from '../constants/legal';
+import { LEGAL, LEGAL_PATH } from '../constants/legal';
+import type { LegalBlock, LegalType } from '../constants/legal';
 import { SITE } from '../constants/site';
 import { scrollToId } from '../utils/scroll';
 
@@ -42,8 +42,9 @@ function Block({ block }: { block: LegalBlock }) {
   );
 }
 
-export default function Legal({ type }: { type: 'privacy' | 'terms' | 'cookies' }) {
+export default function Legal({ type }: { type: LegalType }) {
   const doc = LEGAL[type];
+  const path = LEGAL_PATH[type];
   const jump = (id: string) => (e: React.MouseEvent) => {
     e.preventDefault();
     scrollToId(`#${id}`);
@@ -51,7 +52,7 @@ export default function Legal({ type }: { type: 'privacy' | 'terms' | 'cookies' 
 
   return (
     <>
-      <Seo {...PAGE_SEO[`/${type}`]} path={`/${type}`} />
+      <Seo {...PAGE_SEO[path]} path={path} />
       <div className="pb-24 pt-36 lg:pt-44">
         <div className="container-x">
           <nav aria-label="Breadcrumb" className="mb-6">

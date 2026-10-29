@@ -27,7 +27,7 @@ import { SITE, NAV_ITEMS } from '../src/constants/site.ts';
 import { SERVICES } from '../src/constants/services.ts';
 import { PROJECTS, PROCESS, FAQS } from '../src/constants/content.ts';
 import { ABOUT_STORY, MISSION, VISION, VALUES, WORKING_WITH_US, SERVICE_PILLARS, PROCESS_DETAILS, ENGAGEMENT_MODELS } from '../src/constants/pages.ts';
-import { LEGAL } from '../src/constants/legal.ts';
+import { LEGAL, LEGAL_PATH } from '../src/constants/legal.ts';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = path.join(ROOT, 'dist');
@@ -214,11 +214,12 @@ ${article}
   });
 }
 
-for (const type of ['privacy', 'terms', 'cookies'] as const) {
+for (const type of Object.keys(LEGAL_PATH) as (keyof typeof LEGAL_PATH)[]) {
   const doc = LEGAL[type];
+  const route = LEGAL_PATH[type];
   render({
-    seo: seoFor(`/${type}`),
-    path: `/${type}`,
+    seo: seoFor(route),
+    path: route,
     body: `<h1>${esc(doc.title)}</h1>
 <p>Last updated: ${esc(doc.updated)}</p>${para(doc.intro)}
 ${doc.sections.map((s, i) => `<h2>${i + 1}. ${esc(s.heading)}</h2>${s.blocks.map((b) => (typeof b === 'string' ? para(b) : list(b.list))).join('')}`).join('\n')}`,

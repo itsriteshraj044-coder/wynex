@@ -96,6 +96,7 @@ function AnimatedRoutes() {
           <Route path="/privacy" element={<Page><Legal type="privacy" /></Page>} />
           <Route path="/terms" element={<Page><Legal type="terms" /></Page>} />
           <Route path="/cookies" element={<Page><Legal type="cookies" /></Page>} />
+          <Route path="/taskrypt/privacy" element={<Page><Legal type="taskrypt-privacy" /></Page>} />
           <Route path="*" element={<Page><NotFound /></Page>} />
         </Routes>
       </AnimatePresence>

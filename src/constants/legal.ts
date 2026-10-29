@@ -32,7 +32,17 @@ const contactList = [
   `Post: Grievance Officer, ${COMPANY}, ${ADDRESS}`,
 ];
 
-export const LEGAL: Record<'privacy' | 'terms' | 'cookies', LegalDoc> = {
+export type LegalType = 'privacy' | 'terms' | 'cookies' | 'taskrypt-privacy';
+
+/** Site path of each legal page. App policies live under their app's own path. */
+export const LEGAL_PATH = {
+  privacy: '/privacy',
+  terms: '/terms',
+  cookies: '/cookies',
+  'taskrypt-privacy': '/taskrypt/privacy',
+} as const satisfies Record<LegalType, string>;
+
+export const LEGAL: Record<LegalType, LegalDoc> = {
   privacy: {
     title: 'Privacy Policy',
     updated: UPDATED,
@@ -366,6 +376,95 @@ export const LEGAL: Record<'privacy' | 'terms' | 'cookies', LegalDoc> = {
         id: 'more',
         heading: 'More information',
         blocks: [`See our Privacy Policy at https://wynextechnologies.com/privacy, or email ${EMAIL} with any questions.`],
+      },
+    ],
+  },
+  'taskrypt-privacy': {
+    title: 'Taskrypt Privacy Policy',
+    updated: 'October 30, 2026',
+    intro: `Taskrypt ("the app") is published by ${COMPANY} ("we", "us"). This policy explains what data the app collects, why, and the choices you have. We do not sell your data, show ads, or use third-party analytics or tracking.`,
+    sections: [
+      {
+        id: 'data-we-collect',
+        heading: 'Data we collect',
+        blocks: [
+          {
+            list: [
+              'Email address and display name — to create your account and sign you in.',
+              'Tasks, lists, tags, categories, study plans and Khata Book entries you create — to show them in the app and sync them between your devices.',
+              'Documents and scans you add to the vault, with their name, size and date — to store them securely and make them available on your devices.',
+              'Technical session data (sign-in tokens) — to keep you signed in securely.',
+            ],
+          },
+          'We do not collect your contacts, location, call logs, SMS or advertising ID.',
+        ],
+      },
+      {
+        id: 'permissions',
+        heading: 'Device permissions',
+        blocks: [
+          {
+            list: [
+              'Camera: used only when you choose to scan a document. Scans are saved to your private vault, never anywhere else.',
+              'Fingerprint / face unlock: used only to unlock the app. Your biometric data stays on your device; we never receive it.',
+              'Notifications and exact alarms: used to deliver task reminders. Reminders are scheduled on your phone, and task titles may appear in the notification.',
+            ],
+          },
+        ],
+      },
+      {
+        id: 'storage-security',
+        heading: 'How your data is stored and protected',
+        blocks: [
+          {
+            list: [
+              'Your data is stored with our backend provider, Supabase (PostgreSQL database and private file storage), hosted in Tokyo, Japan (ap-northeast-1).',
+              'Access rules on every table and file ensure only your account can read or change your data. Files are never available through public links.',
+              'On your device, tasks and document details are kept in a private app database so the app works offline. Downloaded documents are encrypted with AES-256-GCM using a key held in the Android Keystore. Device backups exclude this data.',
+              'Optional zero-knowledge vault: if you set a vault passphrase, documents are encrypted on your phone before upload and we never receive the key. If you lose the passphrase, those documents cannot be recovered.',
+              'Data is transferred over encrypted (HTTPS) connections.',
+            ],
+          },
+        ],
+      },
+      {
+        id: 'use',
+        heading: 'How we use your data',
+        blocks: ['We use your data only to provide the app’s features: sign-in, sync, reminders and document storage. We do not use it for advertising or profiling, and we do not share it with anyone except Supabase, which processes it on our behalf, or where required by law.'],
+      },
+      {
+        id: 'retention-deletion',
+        heading: 'Retention and deletion',
+        blocks: [
+          {
+            list: [
+              'Items you delete are kept for up to 60 days so all your devices learn about the deletion, then removed permanently.',
+              'You can delete your account any time in the app under Settings → Account. This immediately removes your profile, all your records and all stored files from our servers.',
+              'Signing out removes your local data from the device by default.',
+              `You can also request deletion by emailing ${EMAIL}.`,
+            ],
+          },
+        ],
+      },
+      {
+        id: 'children',
+        heading: 'Children',
+        blocks: ['Taskrypt is not directed at children under 13, and we do not knowingly collect data from them. If you believe a child has given us data, contact us and we will delete it.'],
+      },
+      {
+        id: 'rights',
+        heading: 'Your rights',
+        blocks: ['You can access, correct or delete your data from within the app, or by contacting us. We will respond within 30 days.'],
+      },
+      {
+        id: 'changes',
+        heading: 'Changes to this policy',
+        blocks: ['If we change this policy, we will update the date above and, for significant changes, notify you in the app.'],
+      },
+      {
+        id: 'contact',
+        heading: 'Contact',
+        blocks: [{ list: [`Email: ${EMAIL}`, `Post: ${COMPANY}, ${ADDRESS}`] }],
       },
     ],
   },

@@ -54,6 +54,10 @@ export const PAGE_SEO = {
     title: 'Cookie Policy — Wynex Technologies',
     description: 'Which cookies and similar technologies the Wynex Technologies website and its embedded services use, and how to manage them.',
   },
+  '/taskrypt/privacy': {
+    title: 'Taskrypt Privacy Policy — Wynex Technologies',
+    description: 'What data the Taskrypt app collects, how it is encrypted and stored, the device permissions it uses, and how to delete your account and data.',
+  },
 } satisfies Record<string, PageSeo>;
 
 export type SeoPath = keyof typeof PAGE_SEO;
