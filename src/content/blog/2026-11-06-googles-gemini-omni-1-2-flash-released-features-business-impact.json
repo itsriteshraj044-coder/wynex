@@ -1,0 +1,26 @@
+{
+  "title": "Google's Gemini Omni 1.2 Flash Is Here: What's New and What It Means for Your Business",
+  "slug": "googles-gemini-omni-1-2-flash-released-features-business-impact",
+  "excerpt": "Google announced Gemini Omni 1.2 Flash, bringing native 15-second video creation, a 30% price drop, and multi-turn conversational editing.",
+  "metaDescription": "Discover Google's Gemini Omni 1.2 Flash: features native 15-second video generation, a 30% price reduction, and advanced multi-turn conversational editing.",
+  "keywords": [
+    "Gemini Omni 1.2 Flash",
+    "Google AI video generation",
+    "Gemini API updates",
+    "conversational video editing",
+    "AI video tools",
+    "Google DeepMind"
+  ],
+  "category": "AI",
+  "tags": [
+    "Gemini",
+    "AI Video",
+    "Google"
+  ],
+  "readTime": "6 min",
+  "content": "Google just dropped Gemini Omni 1.2 Flash. It is a major update aimed at making video generation faster, cheaper, and simpler to scale. If you are building video features or running production pipelines, this release brings native 15-second video output, better reference handling, and a noticeable price cut.\n\n## What Was Announced — The Key Facts, Clearly\n\nGoogle DeepMind launched Gemini Omni 1.2 Flash for production workloads across multiple platforms. The update is live right now via the Gemini API and Google Cloud, giving you enterprise-grade infrastructure out of the box.\n\n*   **General Availability:** Live across the Gemini API, Google Cloud, Google Vids, and Gemini for business.\n*   **Pricing:** Down 30% from Gemini Omni 1.1, now sitting at $0.07 per second for 720p output.\n*   **Native Duration:** Outputs video up to 15 seconds long, up from the previous 10-second limit.\n*   **Enterprise Security:** Runs on Google Cloud with Provisioned Throughput and an invisible SynthID watermark embedded in the output.\n\n## What's New — What Changed and How It Compares\n\nGemini Omni 1.2 Flash brings structural upgrades over past versions, fixing old bottlenecks like visual drift and the dreaded need to restart long generations from scratch.\n\n*   **Cost-Efficient Workflows:** Draft fast at 360p or 720p, fix specific details with follow-up prompts, and upscale the winners to 1080p or 4K.\n*   **Flexible Duration Increments:** Set clip lengths from 3 to 15 seconds in one-second steps, which works well for short product explainers and social clips.\n*   **Enhanced Reference Following:** Pass in character, product, or style images, motion clips up to three seconds, and audio cues to keep details locked from start to finish.\n*   **Stronger Consistency:** Keep characters, objects, and backgrounds steady across motion and camera moves, cutting down on visual drift.\n\n## What It Means for Businesses and Developers — Practical Impact\n\nWhen building video apps, generation costs and visual inconsistency usually kill the project. This update tackles both, changing how engineering teams iterate on visual pipelines.\n\n*   **Multi-Turn Conversational Editing:** Swap out backgrounds, lighting, weather, or aspect ratios step-by-step without losing character performance or camera framing.\n*   **Natural Speech and Lip-Sync:** Generate dialogue with clear lip-sync and multi-speaker conditioning for avatars, narration, and background tracks.\n*   **Cinematic Camera Control:** Direct complex continuous movements like FPV drone shots and long zoom-outs with fewer jump cuts and steadier scaling.\n\n## How to Try It or Prepare — Concrete Next Steps\n\nGetting started depends on whether you are writing code against the API or managing marketing campaigns.\n\n*   **For Developers:** Prototype in Google AI Studio, check out the starter apps, and review the pricing tables in the Gemini API docs.\n*   **For Businesses:** Test workloads in the Google Cloud console and set up Provisioned Throughput for your API integrations.\n*   **For End Users:** Direct scenes in Flow, generate 15-second clips in Google Vids or the Gemini app, and scale ad campaigns in Google Ads.\n\n## The takeaway\n\nGemini Omni 1.2 Flash makes generative video realistic for production environments. With a 30% price drop, 15-second limits, and conversational editing controls, you can finally build repeatable video workflows without blowing your infrastructure budget on failed generations.\n\n## Source\n\n- [Google — Gemini Omni 1.2 Flash: Fast and cost-effective with longer clips](https://blog.google/innovation-and-ai/technology/developers-tools/introducing-gemini-omni-1-2-flash/)",
+  "id": "googles-gemini-omni-1-2-flash-released-features-business-impact",
+  "date": "2026-11-06",
+  "author": "Wynex Editorial",
+  "image": "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=1200&q=70"
+}
